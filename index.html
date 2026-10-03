@@ -871,6 +871,33 @@ function updateOrchestrationDisplay(){
    addLog('MAX','WORKFLOW '+(orchestrationState.currentStep+1)+'/'+orchestrationState.plan.length+': '+current.label+' · '+current.agent);
  }
 }
+async function executeMaxTask(task,agentGroup){
+ const name=agentGroup?.userData?.name||'SPECIALIST';
+ const state=workforceStatus[name];
+ if(state){state.status='EXECUTING';state.task='Executing real tool action…';state.progress=.55;drawWorkforceDisplay();}
+ addLog('MAX','Tool gateway: executing '+name+' task now.');
+ try{
+  const response=await fetch('/api/max',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task,agent:name})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.ok) throw new Error(data.error||'Tool gateway request failed.');
+  if(data.status==='DEPLOYED'&&data.result?.url){
+   orchestrationState.result=data.result;
+   if(state){state.status='COMPLETED';state.task='Deployed: '+data.result.url;state.progress=1;}
+   addLog('MAX','LIVE RESULT: '+data.result.url);
+  }else{
+   orchestrationState.result=data;
+   if(state){state.status='COMPLETED';state.task=data.message||'Execution planned';state.progress=1;}
+   addLog('MAX',data.message||'Task reached the execution gateway.');
+  }
+ }catch(error){
+  orchestrationState.result={status:'ERROR',error:error.message};
+  if(state){state.status='ERROR';state.task=error.message;state.progress=1;}
+  addLog('MAX','Execution failed: '+error.message);
+ }
+ drawWorkforceDisplay();
+ agentGroup.userData.executionDone=true;
+}
+
 function finishOrchestration(agentGroup){
  const name=agentGroup?.userData?.name;
  orchestrationState.active=false;
@@ -921,6 +948,8 @@ function walkAgentToMax(agentGroup,task){
   new THREE.Vector3(0,1.0,-14.0),new THREE.Vector3(2.2,1.0,-14.7),new THREE.Vector3(5.2,1.0,-15.65)
  ];
  walker.userData.walkIndex=0;walker.userData.walkTask=task;walker.userData.walkPhase='TO_MAX';
+ walker.userData.executionStarted=false;
+ walker.userData.executionDone=false;
  const indicator=agentGroup.userData.workIndicator;
  if(indicator){
   indicator.visible=true;
@@ -1013,7 +1042,12 @@ function updateWalkingAgents(dt){
   u.walkTime+=dt;
   if(u.walkPhase==='AT_MAX'){
     u.walkBob=0;
-    if(u.walkTime>1.4){
+    if(!u.executionStarted){
+      u.executionStarted=true;
+      const parent=u.originalParent;
+      if(parent)executeMaxTask(u.walkTask,parent);
+    }
+    if(u.executionDone&&u.walkTime>1.0){
       u.walkPhase='RETURN';u.walkTime=0;
       u.walkWaypoints=[
         new THREE.Vector3(2.2,1.0,-14.7),new THREE.Vector3(0,1.0,-14.0),

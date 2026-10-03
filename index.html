@@ -175,7 +175,16 @@ const entranceLight=box('entrance-light',[3,.035,.08],[0,.16,18.65],0x75a8ff);
 entranceLight.material.emissive=new THREE.Color(0x4d8dff);entranceLight.material.emissiveIntensity=.9;
 
 // Conference room — upper left.
-box('conference-back',[5,3,.16],[-2.75,1.5,-17],0x1a2535);
+// Back wall with a centered panoramic window opening.
+box('conference-back-left',[1.2,3,.16],[-4.65,1.5,-17],0x1a2535);
+box('conference-back-right',[1.2,3,.16],[-.85,1.5,-17],0x1a2535);
+box('conference-back-window-sill',[2.6,.22,.18],[-2.75,1.02,-17],0x2b394d,{metalness:.2});
+const conferenceWindow=new THREE.Mesh(new THREE.BoxGeometry(2.6,1.65,.045),glassMat);
+conferenceWindow.position.set(-2.75,2.0,-16.91);conferenceWindow.castShadow=false;scene.add(conferenceWindow);
+for(const x of [-4.05,-1.45]) box('conference-window-frame',[.09,1.8,.12],[x,2.0,-16.88],0x6d83a8,{metalness:.45});
+box('conference-window-frame-top',[2.7,.09,.12],[-2.75,2.86,-16.88],0x6d83a8,{metalness:.45});
+box('conference-window-frame-bottom',[2.7,.09,.12],[-2.75,1.14,-16.88],0x6d83a8,{metalness:.45});
+box('conference-window-mullion',[.07,1.65,.1],[-2.75,2.0,-16.86],0x6d83a8,{metalness:.45});
 box('conference-left',[.16,3,4.8],[-5.25,1.5,-14.7],0x1a2535);
 box('conference-divider',[.16,3,2.15],[-.25,1.5,-15.65],0x1a2535);
 box('conference-divider-top',[.16,3,.95],[-.25,1.5,-12.75],0x1a2535);
@@ -197,7 +206,16 @@ conferenceBase.position.set(-2.75,.39,-14.7);conferenceBase.castShadow=true;scen
 for(let i=0;i<8;i++){const a=i*Math.PI/4;const chair=new THREE.Mesh(new THREE.CylinderGeometry(.25,.3,.16,8),new THREE.MeshStandardMaterial({color:0x465876,roughness:.7,flatShading:true}));chair.position.set(-2.75+Math.cos(a)*1.65,.35,-14.7+Math.sin(a)*1.65);chair.castShadow=true;scene.add(chair)}
 
 // Max's private office — upper right.
-box('max-office-back',[5,3,.16],[2.75,1.5,-17],0x101925);
+// Max office back wall with a matching panoramic window opening.
+box('max-office-back-left',[1.2,3,.16],[.85,1.5,-17],0x101925);
+box('max-office-back-right',[1.2,3,.16],[4.65,1.5,-17],0x101925);
+box('max-office-window-sill',[2.6,.22,.18],[2.75,1.02,-17],0x2b3445,{metalness:.2});
+const maxWindow=new THREE.Mesh(new THREE.BoxGeometry(2.6,1.65,.045),glassMat);
+maxWindow.position.set(2.75,2.0,-16.91);maxWindow.castShadow=false;scene.add(maxWindow);
+for(const x of [1.45,4.05]) box('max-window-frame',[.09,1.8,.12],[x,2.0,-16.88],0x7487ae,{metalness:.45});
+box('max-window-frame-top',[2.7,.09,.12],[2.75,2.86,-16.88],0x7487ae,{metalness:.45});
+box('max-window-frame-bottom',[2.7,.09,.12],[2.75,1.14,-16.88],0x7487ae,{metalness:.45});
+box('max-window-mullion',[.07,1.65,.1],[2.75,2.0,-16.86],0x7487ae,{metalness:.45});
 box('max-office-right',[.16,3,4.8],[5.25,1.5,-14.7],0x101925);
 box('max-office-divider',[.16,3,1.65],[.25,1.5,-15.9],0x101925);
 box('max-office-divider-top',[.16,3,.8],[.25,1.5,-12.75],0x101925);

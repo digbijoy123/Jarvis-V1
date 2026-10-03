@@ -518,6 +518,10 @@ for(const [min,max,windowCenter] of [[-8.25,-1.2,-4.35],[1.2,8.25,4.35]]){
   const leftEnd=windowCenter-1.125, rightStart=windowCenter+1.125;
   if(leftEnd>min) addCollisionRect((min+leftEnd)/2,ROOM_FRONT,(leftEnd-min)/2,.08);
   if(max>rightStart) addCollisionRect((rightStart+max)/2,ROOM_FRONT,(max-rightStart)/2,.08);
+
+  // The window apertures are visual openings only; the player cannot pass
+  // through them. This collision is centered on each Max/Conference window.
+  addCollisionRect(windowCenter,ROOM_FRONT,1.125,.08);
 }
 
 // Cubicle U-shaped partitions. Back + left + right panels are collidable;

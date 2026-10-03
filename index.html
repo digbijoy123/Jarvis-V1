@@ -5,29 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>JARVIS AI Office — V1</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07090d;color:#eef2f7;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
-#app{position:fixed;inset:0}canvas{display:block}
-.hud{position:fixed;inset:0;pointer-events:none}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07090d;color:#eef2f7;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
+#app{position:fixed;inset:0}canvas{display:block}.hud{position:fixed;inset:0;pointer-events:none}
 .topbar{position:absolute;top:14px;left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{pointer-events:auto;background:rgba(10,14,21,.82);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-.brand b{letter-spacing:.12em;font-size:13px}.brand small{display:block;color:#8f9aaa;margin-top:3px;font-size:10px}
-.status{pointer-events:auto;display:flex;align-items:center;gap:8px;background:rgba(10,14,21,.82);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:9px 12px;font-size:11px;color:#aeb7c4}
-.dot{width:8px;height:8px;border-radius:50%;background:#42e28b;box-shadow:0 0 12px #42e28b}
-.panel{position:absolute;right:14px;bottom:14px;width:min(330px,calc(100vw - 28px));background:rgba(9,13,20,.88);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:14px;pointer-events:auto;box-shadow:0 18px 50px rgba(0,0,0,.35)}
-.panel h3{margin:0 0 5px;font-size:14px}.panel p{margin:0 0 12px;color:#8f9aaa;font-size:11px;line-height:1.45}
-.chat{display:flex;gap:7px}.chat input{min-width:0;flex:1;border:1px solid rgba(255,255,255,.1);background:#111722;color:#fff;border-radius:10px;padding:10px;font-size:12px;outline:none}.chat button{border:0;border-radius:10px;padding:0 13px;background:#e9eef7;color:#111722;font-weight:700}
-.log{max-height:120px;overflow:auto;margin-bottom:10px}.msg{font-size:11px;padding:7px 8px;border-radius:9px;background:#111722;margin-bottom:6px;color:#cbd3de}.msg b{color:#fff}
+.brand{pointer-events:auto;background:rgba(10,14,21,.82);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}.brand b{letter-spacing:.12em;font-size:13px}.brand small{display:block;color:#8f9aaa;margin-top:3px;font-size:10px}
+.status{pointer-events:auto;display:flex;align-items:center;gap:8px;background:rgba(10,14,21,.82);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:9px 12px;font-size:11px;color:#aeb7c4}.dot{width:8px;height:8px;border-radius:50%;background:#42e28b;box-shadow:0 0 12px #42e28b}
+.panel{position:absolute;right:14px;bottom:14px;width:min(330px,calc(100vw - 28px));background:rgba(9,13,20,.9);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:14px;pointer-events:auto;box-shadow:0 18px 50px rgba(0,0,0,.35)}.panel h3{margin:0 0 5px;font-size:14px}.panel p{margin:0 0 12px;color:#8f9aaa;font-size:11px;line-height:1.45}.chat{display:flex;gap:7px}.chat input{min-width:0;flex:1;border:1px solid rgba(255,255,255,.1);background:#111722;color:#fff;border-radius:10px;padding:10px;font-size:12px;outline:none}.chat button{border:0;border-radius:10px;padding:0 13px;background:#e9eef7;color:#111722;font-weight:700}.log{max-height:120px;overflow:auto;margin-bottom:10px}.msg{font-size:11px;padding:7px 8px;border-radius:9px;background:#111722;margin-bottom:6px;color:#cbd3de}.msg b{color:#fff}
 .help{position:absolute;left:14px;bottom:14px;background:rgba(9,13,20,.78);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:9px 11px;color:#8f9aaa;font-size:10px}
-#touch,#desktopControls{position:absolute;pointer-events:auto}
-#touch{display:none;left:14px;bottom:205px;width:178px;height:178px}
-#desktopControls{left:14px;bottom:14px;width:154px;height:116px;padding:10px;background:rgba(9,13,20,.78);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:14px}
-.controlTitle{font-size:9px;color:#8f9aaa;margin:0 0 7px 2px;letter-spacing:.08em}
-.controlGrid{position:relative;width:132px;height:78px}
-.pad{position:absolute;width:40px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(12,17,25,.9);color:#fff;font-size:15px;font-weight:700;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;transition:transform .08s,background .08s}
-.pad:active,.pad.active{transform:scale(.94);background:rgba(70,100,160,.75)}
-#up{left:46px;top:0}#left{left:0;top:40px}#down{left:46px;top:40px}#right{left:92px;top:40px}
-@media(max-width:700px){.help{display:none}.panel{left:14px;right:14px;width:auto;bottom:14px}.panel .log{display:none}.topbar{top:10px}.brand{padding:8px 11px}#touch{display:block}.panel{bottom:12px}.panel p{margin-bottom:8px}#desktopControls{display:none}}
-@media(min-width:701px){#touch{display:none}}
+#desktopControls{position:absolute;left:14px;bottom:14px;width:154px;height:116px;padding:10px;background:rgba(9,13,20,.78);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:14px;pointer-events:auto}.controlTitle{font-size:9px;color:#8f9aaa;margin:0 0 7px 2px;letter-spacing:.08em}.controlGrid{position:relative;width:132px;height:78px}.pad{position:absolute;width:40px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(12,17,25,.9);color:#fff;font-size:15px;font-weight:700;touch-action:none;user-select:none;cursor:pointer}.pad:active,.pad.active{transform:scale(.94);background:rgba(70,100,160,.75)}#d-up{left:46px;top:0}#d-left{left:0;top:40px}#d-down{left:46px;top:40px}#d-right{left:92px;top:40px}
+#mobileControls{display:none;position:absolute;inset:0;pointer-events:none}#moveStick,#lookZone{pointer-events:auto;position:absolute}#moveStick{left:24px;bottom:24px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(90,110,145,.24) 0 32%,rgba(30,38,52,.62) 33% 100%);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 35px rgba(0,0,0,.3)}#stickKnob{position:absolute;width:62px;height:62px;left:44px;top:44px;border-radius:50%;background:rgba(230,238,247,.9);box-shadow:0 4px 18px rgba(0,0,0,.35);transform:translate(0,0);pointer-events:none}#moveHint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:9px;color:#9da8b8;letter-spacing:.08em;pointer-events:none}#lookZone{right:0;top:0;width:58%;height:100%;background:transparent}#lookHint{position:absolute;right:18px;bottom:18px;padding:8px 10px;border-radius:999px;background:rgba(9,13,20,.5);border:1px solid rgba(255,255,255,.08);font-size:9px;color:#9da8b8;pointer-events:none}
+@media(max-width:700px){.help,#desktopControls{display:none}.panel{left:auto;right:12px;bottom:12px;width:min(360px,42vw);padding:12px}.panel .log,.panel p{display:none}.topbar{top:9px;left:12px;right:12px}.brand{padding:8px 11px}.brand b{font-size:12px}.brand small{font-size:9px}.status{padding:8px 11px}#mobileControls{display:block}}
+@media(max-width:700px) and (orientation:landscape){.panel{width:min(350px,34vw);max-height:43vh}.chat input{font-size:11px}.chat button{padding:0 12px}.panel h3{font-size:13px}#moveStick{left:24px;bottom:20px;width:138px;height:138px}#stickKnob{width:58px;height:58px;left:39px;top:39px}#lookZone{width:55%;height:calc(100% - 90px);top:60px}#lookHint{right:18px;bottom:18px}}
+@media(max-width:700px) and (orientation:portrait){#moveStick{bottom:190px}.panel{left:12px;right:12px;width:auto;bottom:12px}}
 </style>
 </head>
 <body>
@@ -41,7 +30,10 @@
   <div id="desktopControls"><div class="controlTitle">MOVE · WASD / ARROWS</div><div class="controlGrid">
     <button class="pad" id="d-up">W</button><button class="pad" id="d-left">A</button><button class="pad" id="d-down">S</button><button class="pad" id="d-right">D</button>
   </div></div>
-  <div id="touch"><div class="controlTitle">TOUCH MOVEMENT</div><div class="controlGrid">
+  <div id="mobileControls">
+    <div id="moveStick"><div id="stickKnob"></div><div id="moveHint">MOVE</div></div>
+    <div id="lookZone"><div id="lookHint">SWIPE RIGHT SIDE · LOOK</div></div>
+  </div><div class="controlGrid">
     <button class="pad" id="up">▲</button><button class="pad" id="left">◀</button><button class="pad" id="down">▼</button><button class="pad" id="right">▶</button>
   </div></div>
   <section class="panel">
@@ -106,16 +98,25 @@ const ring=new THREE.Mesh(new THREE.TorusGeometry(1,.045,10,64),new THREE.MeshBa
 const keys={};let moveX=0,moveZ=0;
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 function updateKeys(){moveX=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);moveZ=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)}
-const controlKeys={up:'w',down:'s',left:'a',right:'d','d-up':'w','d-down':'s','d-left':'a','d-right':'d'};
+const controlKeys={'d-up':'w','d-down':'s','d-left':'a','d-right':'d'};
 Object.entries(controlKeys).forEach(([id,k])=>{
  const b=document.getElementById(id); if(!b)return;
- const on=e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);keys[k]=true;b.classList.add('active')};
+ const on=e=>{e.preventDefault();keys[k]=true;b.classList.add('active')};
  const off=e=>{e.preventDefault();keys[k]=false;b.classList.remove('active')};
- b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);
+ b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off);
 });
+const stick=document.getElementById('moveStick'),knob=document.getElementById('stickKnob');let stickId=null;
+function resetStick(){moveX=0;moveZ=0;knob.style.transform='translate(0,0)'}
+stick.addEventListener('pointerdown',e=>{e.preventDefault();stickId=e.pointerId;stick.setPointerCapture(e.pointerId)});
+stick.addEventListener('pointermove',e=>{if(e.pointerId!==stickId)return;const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.31;let dx=e.clientX-cx,dy=e.clientY-cy,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max}knob.style.transform='translate('+dx+'px,'+dy+'px)';moveX=dx/max;moveZ=dy/max});
+['pointerup','pointercancel','lostpointercapture'].forEach(t=>stick.addEventListener(t,e=>{if(e.pointerId===stickId){stickId=null;resetStick()}}));
+const lookZone=document.getElementById('lookZone');let lookId=null,lastLookX=0,lastLookY=0;
+lookZone.addEventListener('pointerdown',e=>{e.preventDefault();lookId=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;lookZone.setPointerCapture(e.pointerId)});
+lookZone.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;yaw-=dx*.006;pitch=THREE.MathUtils.clamp(pitch-dy*.004,-0.65,0.65)});
+['pointerup','pointercancel','lostpointercapture'].forEach(t=>lookZone.addEventListener(t,e=>{if(e.pointerId===lookId)lookId=null}));
 
 // Mouse look while pointer is locked; on mobile, camera stays fixed for now.
-let yaw=0;
+let yaw=0,pitch=0;
 renderer.domElement.addEventListener('click',()=>{if(innerWidth>700) renderer.domElement.requestPointerLock?.()});
 addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement) yaw-=e.movementX*.0025});
 const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
@@ -134,7 +135,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  const speed=5*dt;const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
  camera.position.addScaledVector(right,moveX*speed);camera.position.addScaledVector(forward,moveZ*speed);
  camera.position.x=THREE.MathUtils.clamp(camera.position.x,-12,12);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-10,10);
- camera.position.y=4.2;const look=new THREE.Vector3(camera.position.x+forward.x*10,1.6,camera.position.z+forward.z*10);camera.lookAt(look);
+ camera.position.y=4.2;const look=new THREE.Vector3(camera.position.x+forward.x*10,1.6+pitch*3,camera.position.z+forward.z*10);camera.lookAt(look);
  orb.rotation.y+=dt;ring.rotation.z+=dt*.4;renderer.render(scene,camera)}
 animate();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});

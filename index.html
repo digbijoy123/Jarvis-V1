@@ -146,7 +146,7 @@ agentModelPromise.then(asset=>{
  maxGroup.add(model);
  if(asset.animations?.length){const mixer=new THREE.AnimationMixer(model);const clip=asset.animations.find(x=>/idle|walk/i.test(x.name))||asset.animations[0];if(clip)mixer.clipAction(clip).play();maxGroup.userData.mixer=mixer;}
 }).catch(()=>{});
-clickable.push(maxGroup);
+// Max becomes clickable after the shared clickable list is initialized.
 const maxLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('MAX · BOSS AGENT'),transparent:true}));
 maxLabel.scale.set(3.5,.7,1);maxLabel.position.set(0,3.05,0);maxGroup.add(maxLabel);
 const maxSign=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('COMMAND OFFICE'),transparent:true}));

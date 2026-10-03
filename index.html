@@ -1,3 +1,12 @@
+const maxGroup=new THREE.Group();
+maxGroup.userData={name:'MAX',role:'Boss agent · receives user commands and orchestrates the office'};
+maxGroup.position.set(3.45,0,-15.65);scene.add(maxGroup);
+const maxModel=createLowPolyAgentModel(0xf0b84b,true);maxModel.position.set(0,.95,0);maxModel.rotation.y=Math.PI;maxGroup.add(maxModel);maxGroup.userData.agentModel=maxModel;
+const maxLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('MAX · BOSS AGENT'),transparent:true}));
+maxLabel.scale.set(2.7,.55,1);maxLabel.position.set(0,3.0,.2);maxGroup.add(maxLabel);
+const maxSign=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('COMMAND OFFICE'),transparent:true}));
+maxSign.scale.set(2.4,.42,1);maxSign.position.set(0,2.55,.2);maxGroup.add(maxSign);
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -166,31 +175,77 @@ for(let z=18;z>=-16;z-=4){
  const pendant=box('ceiling-frame',[4.6,.06,.06],[0,6.03,z],0x39465a,{metalness:.4});
 }
 
-// Glass cubicle dividers make the hallway feel like a real modern office.
-for(const z of [11,6,1,-4,-9]){
- const glassL=new THREE.Mesh(new THREE.BoxGeometry(.08,1.8,3.5),glassMat);glassL.position.set(-4.85,2.15,z);scene.add(glassL);
- const glassR=glassL.clone();glassR.position.x=4.85;scene.add(glassR);
+// === OFFICE PLAN — based on the user's hand-drawn top-view layout ===
+// Bottom = player entrance. Middle = open 3-column x 4-row workstation area.
+// Top = conference room on the left + Max's private office on the right.
+
+const roomWallMat=new THREE.MeshStandardMaterial({color:0x182333,roughness:.78,flatShading:true});
+const roomAccentMat=new THREE.MeshStandardMaterial({color:0x5d7cff,roughness:.45,metalness:.25,flatShading:true,emissive:0x1d2c72,emissiveIntensity:.25});
+
+// Open circulation / entrance area.
+const entranceMat=new THREE.MeshStandardMaterial({color:0x27354a,roughness:.7,flatShading:true});
+box('entrance-threshold',[4.0,.12,.55],[0,.08,18.9],0x526b99,{metalness:.25});
+const entranceLight=box('entrance-light',[3.0,.035,.08],[0,.16,18.65],0x75a8ff);
+entranceLight.material.emissive=new THREE.Color(0x4d8dff);entranceLight.material.emissiveIntensity=.9;
+
+// Conference room — top-left.
+box('conference-back',[5.0,3.0,.16],[-2.75,1.5,-17.0],0x1a2535);
+box('conference-left',[.16,3.0,4.8],[-5.25,1.5,-14.7],0x1a2535);
+box('conference-divider',[.16,3.0,2.15],[-.25,1.5,-15.65],0x1a2535);
+box('conference-divider-top',[.16,3.0,.95],[-.25,1.5,-12.75],0x1a2535);
+const conferenceGlass=new THREE.Mesh(new THREE.BoxGeometry(.08,2.4,3.9),new THREE.MeshPhysicalMaterial({color:0x5ecbff,transparent:true,opacity:.14,roughness:.18,metalness:.1}));
+conferenceGlass.position.set(-5.12,1.55,-14.7);scene.add(conferenceGlass);
+
+const conferenceFloor=new THREE.Mesh(new THREE.BoxGeometry(4.5,.035,4.4),new THREE.MeshStandardMaterial({color:0x202d40,roughness:.92,flatShading:true}));
+conferenceFloor.position.set(-2.75,.03,-14.7);scene.add(conferenceFloor);
+const conferenceTable=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.12,12),new THREE.MeshStandardMaterial({color:0x303d51,roughness:.6,metalness:.2,flatShading:true}));
+conferenceTable.position.set(-2.75,.75,-14.7);conferenceTable.castShadow=true;scene.add(conferenceTable);
+const conferenceBase=new THREE.Mesh(new THREE.CylinderGeometry(.28,.38,.68,8),new THREE.MeshStandardMaterial({color:0x202a39,roughness:.55,metalness:.3,flatShading:true}));
+conferenceBase.position.set(-2.75,.39,-14.7);conferenceBase.castShadow=true;scene.add(conferenceBase);
+for(let i=0;i<8;i++){
+ const a=i*Math.PI/4;
+ const chair=new THREE.Mesh(new THREE.CylinderGeometry(.25,.3,.16,8),new THREE.MeshStandardMaterial({color:0x465876,roughness:.7,flatShading:true}));
+ chair.position.set(-2.75+Math.cos(a)*1.65,.35,-14.7+Math.sin(a)*1.65);chair.castShadow=true;scene.add(chair);
 }
 
-// Reception/command sign at the far end.
-const reception=box('command-threshold',[8,.15,.45],[0,.08,-12.2],0x222c3a,{metalness:.35});
-reception.material.emissive=new THREE.Color(0x1c2e62);reception.material.emissiveIntensity=.25;
+// Max's private office — top-right.
+box('max-office-back',[5.0,3.0,.16],[2.75,1.5,-17.0],0x101925);
+box('max-office-right',[.16,3.0,4.8],[5.25,1.5,-14.7],0x101925);
+box('max-office-divider',[.16,3.0,1.65],[.25,1.5,-15.9],0x101925);
+box('max-office-divider-top',[.16,3.0,.8],[.25,1.5,-12.75],0x101925);
+const maxOfficeFloor=new THREE.Mesh(new THREE.BoxGeometry(4.5,.035,4.4),new THREE.MeshStandardMaterial({color:0x20283a,roughness:1}));
+maxOfficeFloor.position.set(2.75,.03,-14.7);scene.add(maxOfficeFloor);
 
-// Max's enclosed executive office.
-box('max-back-wall',[11,6,.3],[0,3,-19],0x0d131b);
-box('max-office-left',[.3,6,7],[-5.5,3,-15.5],0x0e141d);
-box('max-office-right',[.3,6,7],[5.5,3,-15.5],0x0e141d);
-box('max-office-ceiling',[11,.25,7],[0,6.3,-15.5],0x0b1017);
-const maxCarpet=new THREE.Mesh(new THREE.BoxGeometry(8,.025,5.2),new THREE.MeshStandardMaterial({color:0x1b2432,roughness:1}));
-maxCarpet.position.set(0,.02,-15.5);scene.add(maxCarpet);
-const maxDesk=box('max-desk',[5.2,1.0,2.0],[0,.55,-16.3],0x202832,{metalness:.25});
-const maxScreen=box('max-screen',[2.4,1.25,.1],[0,1.55,-17.15],0x6f8fff,{metalness:.2});
-maxScreen.material.emissive=new THREE.Color(0x3e5fff);maxScreen.material.emissiveIntensity=.65;
-const maxChair=new THREE.Mesh(new THREE.CylinderGeometry(.55,.65,.25,20),new THREE.MeshStandardMaterial({color:0x303845,roughness:.7}));
-maxChair.position.set(0,.85,-14.95);maxChair.castShadow=true;scene.add(maxChair);
-const maxBeacon=new THREE.Mesh(new THREE.TorusGeometry(1.15,.045,12,64),new THREE.MeshBasicMaterial({color:0x7d9bff}));
-maxBeacon.rotation.x=Math.PI/2;maxBeacon.position.set(0,1.05,-16.3);scene.add(maxBeacon);
+const maxDesk=box('max-desk',[2.5,.82,1.15],[3.45,.55,-15.65],0x2b3442,{metalness:.3});
+const maxScreen=box('max-screen',[1.45,.9,.1],[3.45,1.25,-16.22],0x6f8fff,{metalness:.2});
+maxScreen.material.emissive=new THREE.Color(0x3e5fff);maxScreen.material.emissiveIntensity=.8;
+const maxChair=new THREE.Mesh(new THREE.CylinderGeometry(.43,.5,.16,8),new THREE.MeshStandardMaterial({color:0x303b4c,roughness:.7,flatShading:true}));
+maxChair.position.set(3.45,.55,-14.55);maxChair.castShadow=true;scene.add(maxChair);
+const maxBeacon=new THREE.Mesh(new THREE.TorusGeometry(.72,.045,8,32),new THREE.MeshBasicMaterial({color:0x7d9bff}));
+maxBeacon.rotation.x=Math.PI/2;maxBeacon.position.set(3.45,.09,-15.65);scene.add(maxBeacon);
 
+// Four rows of open cubicles. No enclosing walls: desks + chairs + low cable/desk panels only.
+const agents=[
+ {name:'CODER',role:'Full-stack software engineering',pos:[-3.25,0,9.0],color:0x4d8cff},
+ {name:'RESEARCHER',role:'Web research and evidence',pos:[0,0,9.0],color:0xa86cff},
+ {name:'DESIGNER',role:'UI UX and product design',pos:[3.25,0,9.0],color:0xff6fae},
+ {name:'GAME ENGINEER',role:'Games simulations and 3D',pos:[-3.25,0,5.0],color:0x6fd6ff},
+ {name:'TEACHER',role:'Teaching tutoring and explanations',pos:[0,0,5.0],color:0x42d9a0},
+ {name:'ENGINEER',role:'Technical engineering and systems',pos:[3.25,0,5.0],color:0xe6d35b},
+ {name:'BUSINESS',role:'Business sales and operations',pos:[-3.25,0,1.0],color:0xffa84d},
+ {name:'WRITER',role:'Writing documents and communication',pos:[0,0,1.0],color:0xd9a3ff},
+ {name:'DATA ANALYST',role:'Data analysis and automation',pos:[3.25,0,1.0],color:0x7de0c0},
+ {name:'QA',role:'Testing debugging and verification',pos:[-3.25,0,-3.0],color:0xf0e07a},
+ {name:'DEVOPS',role:'GitHub deployment and infrastructure',pos:[0,0,-3.0],color:0x8aa6ff},
+ {name:'OPEN SLOT',role:'Future specialist slot',pos:[3.25,0,-3.0],color:0x64748b,open:true}
+];
+
+const clickable=[];
+// Subtle row markers preserve the hand-drawn grid without enclosing the agents.
+for(const z of [9,5,1,-3]){
+ const row=new THREE.Mesh(new THREE.BoxGeometry(9.4,.025,.035),new THREE.MeshBasicMaterial({color:0x31415b}));
+ row.position.set(0,.045,z-1.65);scene.add(row);
+}
 function lowPolyMat(color,opts={}){return new THREE.MeshStandardMaterial({color,roughness:opts.roughness??.7,metalness:opts.metalness??.05,flatShading:true,emissive:opts.emissive??0x000000,emissiveIntensity:opts.emissiveIntensity??0});}
 function createLowPolyAgentModel(color,isMax=false){
  const g=new THREE.Group();
@@ -238,52 +293,52 @@ const agents=[
 const clickable=[maxGroup];
 function makeAgent(a){
  const g=new THREE.Group();g.position.set(...a.pos);g.userData=a;
- const cubicleW=2.9,cubicleD=3.7,wallH=2.15,wallT=.12;
- const cubicleWall=new THREE.MeshStandardMaterial({color:0x1a2534,roughness:.82,metalness:.08,flatShading:true});
- const frameMat=new THREE.MeshStandardMaterial({color:a.color,roughness:.48,metalness:.3,flatShading:true,emissive:a.color,emissiveIntensity:.08});
- function part(name,size,pos,mat=cubicleWall){
-   const m=new THREE.Mesh(new THREE.BoxGeometry(...size),mat);
-   m.name=name;m.position.set(...pos);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;
+ if(a.open){
+   const empty=new THREE.Mesh(new THREE.BoxGeometry(2.2,.06,1.05),lowPolyMat(0x273247,{roughness:.8}));
+   empty.position.set(0,.52,.18);empty.castShadow=true;g.add(empty);
+   const ring=new THREE.Mesh(new THREE.TorusGeometry(.32,.025,6,18),new THREE.MeshBasicMaterial({color:a.color}));
+   ring.rotation.x=Math.PI/2;ring.position.set(0,.94,.18);g.add(ring);
+ }else{
+   // Simple open workstation: desk, monitor, chair, keyboard terminal and the low-poly AI worker.
+   const desk=new THREE.Mesh(new THREE.BoxGeometry(2.35,.12,1.05),lowPolyMat(0x2a3544,{roughness:.65,metalness:.18}));
+   desk.position.set(0,.72,.18);desk.castShadow=true;desk.receiveShadow=true;g.add(desk);
+   for(const x of [-1.02,1.02]){
+     const leg=new THREE.Mesh(new THREE.BoxGeometry(.09,.68,.09),lowPolyMat(0x1b2431,{roughness:.65,metalness:.35}));
+     leg.position.set(x,.36,.18);leg.castShadow=true;g.add(leg);
+   }
+   const screen=new THREE.Mesh(new THREE.BoxGeometry(1.05,.65,.07),new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.6,roughness:.28,metalness:.2,flatShading:true}));
+   screen.position.set(0,1.18,-.22);screen.userData.agent=a;g.add(screen);
+   const stand=new THREE.Mesh(new THREE.BoxGeometry(.08,.3,.08),lowPolyMat(0x263247,{metalness:.35}));
+   stand.position.set(0,.87,-.22);g.add(stand);
+   const keyboard=new THREE.Mesh(new THREE.BoxGeometry(.62,.025,.22),lowPolyMat(0x111722,{roughness:.3,metalness:.55}));
+   keyboard.position.set(0,.81,.15);g.add(keyboard);
+   const chairSeat=new THREE.Mesh(new THREE.CylinderGeometry(.38,.44,.14,8),lowPolyMat(0x253044,{roughness:.8}));
+   chairSeat.position.set(0,.48,1.02);chairSeat.castShadow=true;g.add(chairSeat);
+   const chairBack=new THREE.Mesh(new THREE.BoxGeometry(.64,.78,.13),lowPolyMat(0x202a3a,{roughness:.75}));
+   chairBack.position.set(0,.88,1.2);chairBack.castShadow=true;g.add(chairBack);
+   const model=createLowPolyAgentModel(a.color,false);
+   model.position.set(0,.95,-.02);model.rotation.y=Math.PI;g.add(model);g.userData.agentModel=model;
+   const terminal=new THREE.Mesh(new THREE.BoxGeometry(.55,.05,.24),lowPolyMat(0x111722,{roughness:.3,metalness:.55}));
+   terminal.position.set(0,.82,.38);terminal.userData.agent=a;g.add(terminal);
+   const terminalGlow=new THREE.Mesh(new THREE.BoxGeometry(.36,.018,.04),new THREE.MeshBasicMaterial({color:a.color}));
+   terminalGlow.position.set(0,.855,.38);terminalGlow.userData.agent=a;g.add(terminalGlow);
  }
- part('cubicle-back',[cubicleW,wallH,wallT],[0,wallH/2,-cubicleD/2]);
- part('cubicle-left',[wallT,wallH,cubicleD],[-cubicleW/2,wallH/2,0]);
- part('cubicle-right',[wallT,wallH,cubicleD],[cubicleW/2,wallH/2,0]);
- part('frame-back',[cubicleW+.2,.12,.12],[0,wallH+.05,-cubicleD/2],frameMat);
- part('frame-left',[.12,.12,cubicleD+.1],[-cubicleW/2,wallH+.05,0],frameMat);
- part('frame-right',[.12,.12,cubicleD+.1],[cubicleW/2,wallH+.05,0],frameMat);
-
- part('desk',[2.25,.82,1.15],[0,.55,.18],new THREE.MeshStandardMaterial({color:0x2a3544,roughness:.65,metalness:.18,flatShading:true}));
- const screen=part('screen',[1.25,.78,.08],[0,1.27,.57],new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.5,roughness:.28,metalness:.2,flatShading:true}));
- screen.userData.agent=a;
-
- const chairSeat=new THREE.Mesh(new THREE.CylinderGeometry(.42,.48,.16,8),lowPolyMat(0x253044,{roughness:.8}));
- chairSeat.position.set(0,.55,1.02);chairSeat.castShadow=true;g.add(chairSeat);
- const chairBack=new THREE.Mesh(new THREE.BoxGeometry(.72,.85,.14),lowPolyMat(0x202a3a,{roughness:.75}));
- chairBack.position.set(0,1.0,1.25);chairBack.castShadow=true;g.add(chairBack);
-
- const model=createLowPolyAgentModel(a.color,false);
- model.position.set(0,.95,-.05);model.rotation.y=Math.PI;g.add(model);g.userData.agentModel=model;
-
- const terminal=part('ai-terminal',[.72,.06,.32],[0,1.01,.45],lowPolyMat(0x111722,{roughness:.3,metalness:.55}));
- terminal.userData.agent=a;
- const terminalGlow=part('terminal-glow',[.48,.02,.06],[0,1.045,.45],new THREE.MeshBasicMaterial({color:a.color}));
- terminalGlow.userData.agent=a;
-
  const label=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.name),transparent:true}));
- label.scale.set(2.25,.55,1);label.position.set(0,2.65,.2);g.add(label);
- const role=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.role.toUpperCase()),transparent:true}));
- role.scale.set(2.75,.34,1);role.position.set(0,2.28,.2);g.add(role);
-
- scene.add(g);clickable.push(g);
+ label.scale.set(a.open?2.0:2.1,.48,1);label.position.set(0,2.7,.1);g.add(label);
+ if(!a.open){
+   const role=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.role.toUpperCase()),transparent:true}));
+   role.scale.set(2.25,.28,1);role.position.set(0,2.35,.1);g.add(role);
+ }
+ scene.add(g);if(!a.open)clickable.push(g);
 }
 
 function makeText(text){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.clearRect(0,0,512,128);x.font='700 34px Arial';x.textAlign='center';x.fillStyle='#ffffff';x.fillText(text,256,72);return new THREE.CanvasTexture(c)}
 
 agents.forEach(makeAgent);
 
-// Hallway navigation marker: JARVIS is the orchestration layer, Max is the boss agent.
-const jarvisBeacon=new THREE.Mesh(new THREE.TorusGeometry(.65,.035,10,48),new THREE.MeshBasicMaterial({color:0x7d9bff}));
-jarvisBeacon.rotation.x=Math.PI/2;jarvisBeacon.position.set(0,.08,17);scene.add(jarvisBeacon);
+// Entrance marker: JARVIS is the orchestration/runtime layer behind Max.
+const jarvisBeacon=new THREE.Mesh(new THREE.TorusGeometry(.75,.035,10,48),new THREE.MeshBasicMaterial({color:0x7d9bff}));
+jarvisBeacon.rotation.x=Math.PI/2;jarvisBeacon.position.set(0,.08,18.2);scene.add(jarvisBeacon);
 
 const keys={};let moveX=0,moveZ=0,joyX=0,joyZ=0;
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});

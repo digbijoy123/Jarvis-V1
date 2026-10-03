@@ -420,24 +420,44 @@ function makeAgent(a){
   addPartition('cubicle-left',[.09,panelHeight,1.88],[-1.34,panelY,.12]);
   addPartition('cubicle-right',[.09,panelHeight,1.88],[1.34,panelY,.12]);
 
-  // Small rectangular opening cut from the TOP of the front cubicle wall.
-  // The lower panel remains solid; the upper section is split around the opening.
-  const frontWindowMat=lowPolyMat(0x38516d,{roughness:.32,metalness:.08});
+  // Front cubicle wall with a REAL rectangular window opening.
+  // The wall is solid below and around the opening, with open space only in the window.
   const windowY=1.62, windowW=1.05, windowH=.34;
   const windowBottom=windowY-windowH/2, windowTop=windowY+windowH/2;
+  const frontWallMat=lowPolyMat(0xb8c2cf,{roughness:.58,metalness:.22});
   const frontFrame=lowPolyMat(0x8795a8,{roughness:.58,metalness:.24});
+  const frontZ=1.07;
+  const frontW=2.72;
 
-  // Replace the visual top portion of the front wall with two side posts,
-  // a top header and a bottom sill, leaving the center as an open window.
-  for(const x of [-1.34,1.34]){
-    const post=new THREE.Mesh(new THREE.BoxGeometry(.09,panelHeight, .09),frontFrame);
-    post.position.set(x,panelY,1.07);post.castShadow=true;g.add(post);
+  // Solid lower portion of the front wall.
+  const frontLowerH=windowBottom;
+  const frontLower=new THREE.Mesh(new THREE.BoxGeometry(frontW,frontLowerH,.09),frontWallMat);
+  frontLower.position.set(0,frontLowerH/2,frontZ);
+  frontLower.castShadow=true;frontLower.receiveShadow=true;g.add(frontLower);
+
+  // Solid upper portion above the window.
+  const frontUpperH=panelY+panelHeight/2-windowTop;
+  const frontUpper=new THREE.Mesh(new THREE.BoxGeometry(frontW,frontUpperH,.09),frontWallMat);
+  frontUpper.position.set(0,windowTop+frontUpperH/2,frontZ);
+  frontUpper.castShadow=true;frontUpper.receiveShadow=true;g.add(frontUpper);
+
+  // Solid wall sections on both sides of the window.
+  const sideW=(frontW-windowW)/2;
+  for(const x of [-frontW/2+sideW/2, frontW/2-sideW/2]){
+    const side=new THREE.Mesh(new THREE.BoxGeometry(sideW,windowTop-windowBottom,.09),frontWallMat);
+    side.position.set(x,(windowBottom+windowTop)/2,frontZ);
+    side.castShadow=true;side.receiveShadow=true;g.add(side);
   }
-  const frontHeader=new THREE.Mesh(new THREE.BoxGeometry(2.72,panelY+panelHeight/2-windowTop,.09),frontFrame);
-  frontHeader.position.set(0,(windowTop+panelY+panelHeight/2)/2,1.07);
-  frontHeader.castShadow=true;g.add(frontHeader);
-  const frontSill=new THREE.Mesh(new THREE.BoxGeometry(windowW,.07,.10),frontFrame);
-  frontSill.position.set(0,windowBottom,1.07);frontSill.castShadow=true;g.add(frontSill);
+
+  // Slim frame around the actual opening.
+  for(const x of [-windowW/2,windowW/2]){
+    const frame=new THREE.Mesh(new THREE.BoxGeometry(.07,windowH,.10),frontFrame);
+    frame.position.set(x,windowY,frontZ+.01);frame.castShadow=true;g.add(frame);
+  }
+  for(const y of [windowBottom,windowTop]){
+    const frame=new THREE.Mesh(new THREE.BoxGeometry(windowW+.07,.07,.10),frontFrame);
+    frame.position.set(0,y,frontZ+.01);frame.castShadow=true;g.add(frame);
+  }
 
 
   // Clean work surface spanning between the privacy panels.
@@ -495,20 +515,23 @@ for(const [min,max,windowCenter] of [[-8.25,-1.2,-4.35],[1.2,8.25,4.35]]){
   if(max>rightStart) addCollisionRect((rightStart+max)/2,ROOM_FRONT,(max-rightStart)/2,.08);
 }
 
-// Small front window openings are also collidable.
-// The visible opening stays open-looking, but the player cannot pass through it.
+// Front cubicle wall collision, leaving the rectangular window opening passable.
 for(let i=0;i<agents.length;i++){
   const a=agents[i], layout=CUBICLE_LAYOUT[i];
   if(!layout || a.open) continue;
   const [x,z,angle,scale]=layout;
   const ca=Math.cos(angle), sa=Math.sin(angle);
   const localToWorld=(lx,lz)=>({x:x+(lx*ca-lz*sa)*scale,z:z+(lx*sa+lz*ca)*scale});
-  const p=localToWorld(0,1.07);
-  addCollisionRect(p.x,p.z,.525*scale,.045*scale,angle);
+  const frontZ=1.07;
+  const windowW=1.05, windowBottom=1.45, windowTop=1.79;
+  const frontW=2.72;
+  const wallThickness=.045;
+  let p=localToWorld(0,frontZ);
+  addCollisionRect(p.x,p.z,frontW/2*scale,wallThickness*scale,angle);
 }
 
 // Cubicle U-shaped partitions. Back + left + right panels are collidable;
-// the open front remains walkable.
+// the front wall is now collidable separately so its window can remain open.
 for(let i=0;i<agents.length;i++){
   const a=agents[i], layout=CUBICLE_LAYOUT[i];
   if(!layout || a.open) continue;

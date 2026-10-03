@@ -518,6 +518,102 @@ function makeAgent(a){
 function makeText(text){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.clearRect(0,0,512,128);x.font='700 34px Arial';x.textAlign='center';x.fillStyle='#ffffff';x.fillText(text,256,72);return new THREE.CanvasTexture(c)}
 agents.forEach(makeAgent);
 
+// === AI WORKFORCE STATUS DISPLAY ===
+// A large in-world dashboard at the end of the central corridor.
+// It is intentionally data-driven so the same display can later be connected
+// to Max's real orchestration state and made clickable/interactable.
+const workforceDisplayCanvas=document.createElement('canvas');
+workforceDisplayCanvas.width=1024;
+workforceDisplayCanvas.height=512;
+const workforceDisplayCtx=workforceDisplayCanvas.getContext('2d');
+const workforceDisplayTexture=new THREE.CanvasTexture(workforceDisplayCanvas);
+workforceDisplayTexture.colorSpace=THREE.SRGBColorSpace;
+
+const workforceDisplayGroup=new THREE.Group();
+workforceDisplayGroup.name='AI Workforce Status Display';
+workforceDisplayGroup.position.set(0,3.15,-16.84);
+
+const workforceFrame=new THREE.Mesh(
+  new THREE.BoxGeometry(4.35,2.25,.16),
+  new THREE.MeshStandardMaterial({color:0x4a2c1d,roughness:.48,metalness:.45})
+);
+workforceFrame.castShadow=true;
+workforceFrame.receiveShadow=true;
+workforceDisplayGroup.add(workforceFrame);
+
+const workforceScreen=new THREE.Mesh(
+  new THREE.PlaneGeometry(4.05,1.95),
+  new THREE.MeshBasicMaterial({map:workforceDisplayTexture})
+);
+workforceScreen.position.z=.09;
+workforceDisplayGroup.add(workforceScreen);
+
+const workforceStatus={
+  // Future runtime fields:
+  // status: 'WORKING' | 'IDLE' | 'ERROR',
+  // task: current task description,
+  // progress: 0..1
+};
+for(const agent of agents) workforceStatus[agent.name]={status:'IDLE',task:'No active task',progress:0};
+
+function drawWorkforceDisplay(){
+  const ctx=workforceDisplayCtx;
+  ctx.clearRect(0,0,1024,512);
+
+  // Warm glass/terminal background.
+  const bg=ctx.createLinearGradient(0,0,1024,512);
+  bg.addColorStop(0,'#1a100b');
+  bg.addColorStop(1,'#302015');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,1024,512);
+
+  ctx.fillStyle='#f6d2a2';
+  ctx.font='700 34px Arial';
+  ctx.fillText('AI WORKFORCE STATUS',36,48);
+  ctx.fillStyle='#a98b70';
+  ctx.font='16px Arial';
+  ctx.fillText('LIVE COMMAND CENTER · READY FOR ORCHESTRATION',38,76);
+
+  const cols=2, rows=Math.ceil(agents.length/cols);
+  const cardW=466, cardH=62, gapX=18, gapY=8, startY=104;
+  agents.forEach((agent,i)=>{
+    const col=i%cols,row=Math.floor(i/cols);
+    const x=36+col*(cardW+gapX), y=startY+row*(cardH+gapY);
+    const state=workforceStatus[agent.name];
+    const working=state.status==='WORKING';
+    const error=state.status==='ERROR';
+
+    ctx.fillStyle=working?'#3a2616':error?'#321918':'#171311';
+    ctx.fillRect(x,y,cardW,cardH);
+    ctx.strokeStyle=working?'#c98a43':error?'#a84d45':'#5a4030';
+    ctx.lineWidth=2;ctx.strokeRect(x,y,cardW,cardH);
+
+    ctx.fillStyle=agent.color?'#f2d5ad':'#fff';
+    ctx.font='700 18px Arial';
+    ctx.fillText(agent.name,x+16,y+24);
+
+    ctx.fillStyle=working?'#f2b35e':error?'#ef8175':'#8e9a94';
+    ctx.font='700 12px Arial';
+    ctx.fillText(state.status,x+16,y+45);
+
+    ctx.fillStyle='#9b8776';
+    ctx.font='12px Arial';
+    const task=state.task.length>38?state.task.slice(0,35)+'...':state.task;
+    ctx.fillText(task,x+170,y+37);
+  });
+
+  workforceDisplayTexture.needsUpdate=true;
+}
+drawWorkforceDisplay();
+scene.add(workforceDisplayGroup);
+
+const workforceDisplayHitTarget=workforceDisplayGroup;
+workforceDisplayHitTarget.userData={
+  name:'AI WORKFORCE STATUS',
+  interactive:true,
+  description:'Live specialist status dashboard. Runtime orchestration will connect here later.'
+};
+clickable.push(workforceDisplayHitTarget);
+
 // === PLAYER COLLISION ===
 // Lightweight 2D collision against room walls and cubicle partitions.
 // Cubicle fronts remain open so the player can enter them.

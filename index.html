@@ -65,6 +65,8 @@
 </div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
+import { SkeletonUtils } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/utils/SkeletonUtils.js';
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x07090d);
@@ -76,6 +78,9 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWid
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.domElement.style.touchAction='none';
 document.getElementById('app').appendChild(renderer.domElement);
+const gltfLoader=new GLTFLoader();
+const AGENT_MODEL='https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
+const agentModelPromise=gltfLoader.loadAsync(AGENT_MODEL).catch(err=>{console.error('Agent model failed to load',err);return null;});
 
 scene.add(new THREE.HemisphereLight(0xb9d4ff,0x18202b,2.0));
 const key=new THREE.DirectionalLight(0xffffff,2.6);key.position.set(4,10,5);key.castShadow=true;scene.add(key);
@@ -83,46 +88,71 @@ const fill=new THREE.PointLight(0x6d8cff,18,22);fill.position.set(0,5,0);scene.a
 
 function box(name,size,pos,color,opts={}){const m=new THREE.MeshStandardMaterial({color,roughness:.72,metalness:opts.metalness||0});const o=new THREE.Mesh(new THREE.BoxGeometry(...size),m);o.name=name;o.position.set(...pos);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
 
-const wallMat=new THREE.MeshStandardMaterial({color:0x10151d,roughness:.82});
-const floorMat=new THREE.MeshStandardMaterial({color:0x171c25,roughness:.9});
-box('hall-floor',[11,.3,42],[0,-.15,3],0x171c25);
-box('hall-left-wall',[.3,6,42],[-5.5,3,3],0x10151d);
-box('hall-right-wall',[.3,6,42],[5.5,3,3],0x10151d);
-box('hall-ceiling',[11,.25,42],[0,6.3,3],0x0c1118);
+const wallMat=new THREE.MeshStandardMaterial({color:0x111823,roughness:.78});
+const floorMat=new THREE.MeshStandardMaterial({color:0x151b24,roughness:.9});
+const trimMat=new THREE.MeshStandardMaterial({color:0x2b3545,roughness:.5,metalness:.35});
+const glassMat=new THREE.MeshPhysicalMaterial({color:0x6f8cff,transparent:true,opacity:.13,roughness:.12,metalness:.1});
+box('hall-floor',[11,.3,42],[0,-.15,3],0x151b24);
+box('hall-left-wall',[.3,6,42],[-5.5,3,3],0x0e141d);
+box('hall-right-wall',[.3,6,42],[5.5,3,3],0x0e141d);
+box('hall-ceiling',[11,.25,42],[0,6.3,3],0x0b1017);
 
-// Back wall separating the hallway from Max's office.
-box('max-back-wall',[11,6,.3],[0,3,-19],0x10151d);
-
-// Max's office: enclosed room at the end of the hallway with a wide entrance.
-box('max-office-left',[.3,6,7],[-5.5,3,-15.5],0x10151d);
-box('max-office-right',[.3,6,7],[5.5,3,-15.5],0x10151d);
-box('max-office-ceiling',[11,.25,7],[0,6.3,-15.5],0x0c1118);
-
-// Floor path and ceiling lights.
-const grid=new THREE.GridHelper(10.5,21,0x303a49,0x1c2330);grid.position.y=.02;grid.position.z=3;scene.add(grid);
+// Architectural trim and wall panels.
+for(const x of [-5.25,5.25]) for(let z=18;z>=-17;z-=4){
+ const panel=box('wall-panel',[.08,2.7,2.5],[x,3,z],0x18212d,{metalness:.2});
+ panel.material=trimMat;
+}
+for(let z=19;z>=-17;z-=4){
+ const strip=box('floor-light',[.08,.035,2.8],[-4.95,.035,z],0x496cff,{metalness:.3});
+ strip.material.emissive=new THREE.Color(0x304cff);strip.material.emissiveIntensity=.55;
+ const strip2=strip.clone();strip2.position.x=4.95;scene.add(strip2);
+}
 for(let z=18;z>=-16;z-=4){
- const light=box('ceiling-light',[3.2,.08,.5],[0,6.15,z],0xdce8ff,{metalness:.1});
- light.material.emissive=new THREE.Color(0x9fbfff);light.material.emissiveIntensity=.35;
+ const light=box('ceiling-light',[3.0,.08,.5],[0,6.12,z],0xcddcff,{metalness:.1});
+ light.material.emissive=new THREE.Color(0x9fbfff);light.material.emissiveIntensity=.6;
+ const pendant=box('ceiling-frame',[4.6,.06,.06],[0,6.03,z],0x39465a,{metalness:.4});
 }
 
-// Max office desk and command area.
-const maxDesk=box('max-desk',[5.2,1.0,2.0],[0,.55,-15.7],0x202832,{metalness:.22});
-const maxScreen=box('max-screen',[2.4,1.25,.1],[0,1.55,-16.55],0x6f8fff,{metalness:.2});
-maxScreen.material.emissive=new THREE.Color(0x3e5fff);maxScreen.material.emissiveIntensity=.55;
-const maxChair=new THREE.Mesh(new THREE.CylinderGeometry(.55,.65,.25,20),new THREE.MeshStandardMaterial({color:0x303845,roughness:.7}));
-maxChair.position.set(0,.85,-14.45);maxChair.castShadow=true;scene.add(maxChair);
-const maxHead=new THREE.Mesh(new THREE.SphereGeometry(.55,24,16),new THREE.MeshStandardMaterial({color:0x9bb7ff,emissive:0x496cff,emissiveIntensity:.25}));
-maxHead.position.set(0,2.15,-15.7);maxHead.castShadow=true;scene.add(maxHead);
-const maxBody=box('max-body',[.85,1.1,.55],[0,1.35,-15.55],0x303845);
-const maxLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('MAX · BOSS AGENT'),transparent:true}));
-maxLabel.scale.set(3.5,.7,1);maxLabel.position.set(0,3.0,-15.7);scene.add(maxLabel);
-const maxSign=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('COMMAND OFFICE'),transparent:true}));
-maxSign.scale.set(3,.5,1);maxSign.position.set(0,2.55,-15.7);scene.add(maxSign);
-const maxGroup=new THREE.Group();maxGroup.userData={name:'MAX',role:'Boss agent · receives user commands and orchestrates the office'};maxGroup.add(maxHead,maxBody,maxLabel,maxSign); // logical interaction marker
-scene.add(maxGroup);
-const maxBeacon=new THREE.Mesh(new THREE.TorusGeometry(1.1,.05,12,64),new THREE.MeshBasicMaterial({color:0x7d9bff}));
-maxBeacon.rotation.x=Math.PI/2;maxBeacon.position.set(0,1.05,-15.7);scene.add(maxBeacon);
+// Glass cubicle dividers make the hallway feel like a real modern office.
+for(const z of [11,6,1,-4,-9]){
+ const glassL=new THREE.Mesh(new THREE.BoxGeometry(.08,1.8,3.5),glassMat);glassL.position.set(-4.85,2.15,z);scene.add(glassL);
+ const glassR=glassL.clone();glassR.position.x=4.85;scene.add(glassR);
+}
 
+// Reception/command sign at the far end.
+const reception=box('command-threshold',[8,.15,.45],[0,.08,-12.2],0x222c3a,{metalness:.35});
+reception.material.emissive=new THREE.Color(0x1c2e62);reception.material.emissiveIntensity=.25;
+
+// Max's enclosed executive office.
+box('max-back-wall',[11,6,.3],[0,3,-19],0x0d131b);
+box('max-office-left',[.3,6,7],[-5.5,3,-15.5],0x0e141d);
+box('max-office-right',[.3,6,7],[5.5,3,-15.5],0x0e141d);
+box('max-office-ceiling',[11,.25,7],[0,6.3,-15.5],0x0b1017);
+const maxCarpet=new THREE.Mesh(new THREE.BoxGeometry(8,.025,5.2),new THREE.MeshStandardMaterial({color:0x1b2432,roughness:1}));
+maxCarpet.position.set(0,.02,-15.5);scene.add(maxCarpet);
+const maxDesk=box('max-desk',[5.2,1.0,2.0],[0,.55,-16.3],0x202832,{metalness:.25});
+const maxScreen=box('max-screen',[2.4,1.25,.1],[0,1.55,-17.15],0x6f8fff,{metalness:.2});
+maxScreen.material.emissive=new THREE.Color(0x3e5fff);maxScreen.material.emissiveIntensity=.65;
+const maxChair=new THREE.Mesh(new THREE.CylinderGeometry(.55,.65,.25,20),new THREE.MeshStandardMaterial({color:0x303845,roughness:.7}));
+maxChair.position.set(0,.85,-14.95);maxChair.castShadow=true;scene.add(maxChair);
+const maxBeacon=new THREE.Mesh(new THREE.TorusGeometry(1.15,.045,12,64),new THREE.MeshBasicMaterial({color:0x7d9bff}));
+maxBeacon.rotation.x=Math.PI/2;maxBeacon.position.set(0,1.05,-16.3);scene.add(maxBeacon);
+
+const maxGroup=new THREE.Group();maxGroup.userData={name:'MAX',role:'Boss agent · receives user commands and orchestrates the office'};maxGroup.position.set(0,0,-16.3);scene.add(maxGroup);
+agentModelPromise.then(asset=>{
+ if(!asset)return;
+ const model=SkeletonUtils.clone(asset.scene);const b=new THREE.Box3().setFromObject(model);const sz=b.getSize(new THREE.Vector3());const scale=2.35/Math.max(sz.y,.001);
+ model.scale.setScalar(scale);model.position.set(0,.95,0);model.rotation.y=Math.PI;model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+ maxGroup.add(model);
+ if(asset.animations?.length){const mixer=new THREE.AnimationMixer(model);const clip=asset.animations.find(x=>/idle|walk/i.test(x.name))||asset.animations[0];if(clip)mixer.clipAction(clip).play();maxGroup.userData.mixer=mixer;}
+}).catch(()=>{});
+clickable.push(maxGroup);
+const maxLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('MAX · BOSS AGENT'),transparent:true}));
+maxLabel.scale.set(3.5,.7,1);maxLabel.position.set(0,3.05,0);maxGroup.add(maxLabel);
+const maxSign=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('COMMAND OFFICE'),transparent:true}));
+maxSign.scale.set(3,.5,1);maxSign.position.set(0,2.55,0);maxGroup.add(maxSign);
+
+const grid=new THREE.GridHelper(10.5,21,0x303a49,0x1c2330);grid.position.y=.02;grid.position.z=3;scene.add(grid);
 const agents=[
  {name:'CODER',role:'Full-stack software engineering',pos:[-2.8,0,11],color:0x4d8cff},
  {name:'RESEARCHER',role:'Web research and evidence',pos:[2.8,0,11],color:0xa86cff},
@@ -137,50 +167,65 @@ const agents=[
  {name:'DEVOPS',role:'GitHub deployment and infrastructure',pos:[0,0,-13],color:0x8aa6ff}
 ];
 const clickable=[maxGroup];
-function makeAgent(a){
+async function makeAgent(a){
  const g=new THREE.Group();g.position.set(...a.pos);g.userData=a;
-
- // Individual cubicle: low partitions, rear wall, ceiling frame and entrance opening.
  const cubicleW=2.9,cubicleD=3.7,wallH=2.15,wallT=.12;
- const wallMat=new THREE.MeshStandardMaterial({color:0x151b25,roughness:.82,metalness:.05});
- function part(name,size,pos,mat=wallMat){
+ const cubicleWall=new THREE.MeshStandardMaterial({color:0x151d28,roughness:.82,metalness:.08});
+ const frameMat=new THREE.MeshStandardMaterial({color:0x2b3545,roughness:.5,metalness:.35});
+ function part(name,size,pos,mat=cubicleWall){
    const m=new THREE.Mesh(new THREE.BoxGeometry(...size),mat);
    m.name=name;m.position.set(...pos);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;
  }
  part('cubicle-back',[cubicleW,wallH,wallT],[0,wallH/2,-cubicleD/2]);
  part('cubicle-left',[wallT,wallH,cubicleD],[-cubicleW/2,wallH/2,0]);
  part('cubicle-right',[wallT,wallH,cubicleD],[cubicleW/2,wallH/2,0]);
-
- // Top frame makes the workstation read as a real office cubicle.
- const frameMat=new THREE.MeshStandardMaterial({color:0x273141,roughness:.55,metalness:.35});
  part('frame-back',[cubicleW+.2,.12,.12],[0,wallH+.05,-cubicleD/2],frameMat);
  part('frame-left',[.12,.12,cubicleD+.1],[-cubicleW/2,wallH+.05,0],frameMat);
  part('frame-right',[.12,.12,cubicleD+.1],[cubicleW/2,wallH+.05,0],frameMat);
 
- // Desk and AI workstation.
- part('desk',[3.6,1,1.55],[0,.55,.15],new THREE.MeshStandardMaterial({color:0x242b36,roughness:.72,metalness:.12}));
- const screen=part('screen',[1.35,.9,.08],[0,1.35,.55],new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.22,roughness:.3,metalness:.2}));
+ // Real desk setup.
+ part('desk',[2.25,.82,1.15],[0,.55,.18],new THREE.MeshStandardMaterial({color:0x252e3a,roughness:.65,metalness:.18}));
+ const screen=part('screen',[1.25,.78,.08],[0,1.27,.57],new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.28,roughness:.28,metalness:.25}));
  screen.userData.agent=a;
 
- // AI slot / status core on every desk.
- const slotMat=new THREE.MeshStandardMaterial({color:0x101722,emissive:a.color,emissiveIntensity:.35,metalness:.45,roughness:.25});
- const slot=part('ai-slot',[.9,.08,.32],[0,1.05,.45],slotMat);
- slot.userData.agent=a;
- const led=new THREE.Mesh(new THREE.SphereGeometry(.07,12,8),new THREE.MeshBasicMaterial({color:a.color}));
- led.position.set(.52,1.07,.45);g.add(led);
+ // Real 3D agent model replaces the primitive head/body placeholder.
+ const modelAsset=await agentModelPromise;
+ if(modelAsset){
+   const model=SkeletonUtils.clone(modelAsset.scene);
+   const box3=new THREE.Box3().setFromObject(model);
+   const size=box3.getSize(new THREE.Vector3());
+   const scale=2.0/Math.max(size.y,.001);
+   model.scale.setScalar(scale);
+   model.position.set(0,.95,-.05);
+   model.rotation.y=Math.PI;
+   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+   g.add(model);
+   if(modelAsset.animations?.length){
+     const mixer=new THREE.AnimationMixer(model);
+     const clip=modelAsset.animations.find(x=>/walk|idle|run/i.test(x.name))||modelAsset.animations[0];
+     if(clip)mixer.clipAction(clip).play();
+     g.userData.mixer=mixer;
+   }
+ }else{
+   // Only a loading fallback; no longer used once the model is available.
+   const fallback=new THREE.Mesh(new THREE.CapsuleGeometry(.3,.9,6,12),new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.1}));
+   fallback.position.y=1.35;g.add(fallback);
+ }
 
- const head=new THREE.Mesh(new THREE.SphereGeometry(.42,20,14),new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.12}));
- head.position.set(0,1.85,.25);head.castShadow=true;g.add(head);
- const body=part('body',[.65,.9,.45],[0,1.25,.2],new THREE.MeshStandardMaterial({color:0x303845,roughness:.75}));
+ // AI terminal: physical monitor + keyboard block instead of a floating slot.
+ const terminal=part('ai-terminal',[.72,.06,.32],[0,1.01,.45],new THREE.MeshStandardMaterial({color:0x111722,roughness:.3,metalness:.55}));
+ terminal.userData.agent=a;
+ const terminalGlow=part('terminal-glow',[.48,.02,.06],[0,1.045,.45],new THREE.MeshBasicMaterial({color:a.color}));
+ terminalGlow.userData.agent=a;
 
  const label=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.name),transparent:true}));
- label.scale.set(2.2,.55,1);label.position.set(0,2.55,.15);g.add(label);
-
+ label.scale.set(2.25,.55,1);label.position.set(0,2.65,.2);g.add(label);
  const role=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.role.toUpperCase()),transparent:true}));
- role.scale.set(2.8,.34,1);role.position.set(0,2.22,.15);g.add(role);
+ role.scale.set(2.75,.34,1);role.position.set(0,2.28,.2);g.add(role);
 
  scene.add(g);clickable.push(g);
 }
+
 function makeText(text){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.clearRect(0,0,512,128);x.font='700 34px Arial';x.textAlign='center';x.fillStyle='#ffffff';x.fillText(text,256,72);return new THREE.CanvasTexture(c)}
 
 agents.forEach(makeAgent);
@@ -247,7 +292,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  camera.position.addScaledVector(right,moveX*speed);camera.position.addScaledVector(forward,moveZ*speed);
  camera.position.x=THREE.MathUtils.clamp(camera.position.x,-4.7,4.7);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-17.8,19.5);
  camera.position.y=4.2;const look=new THREE.Vector3(camera.position.x+forward.x*10,1.6+pitch*3,camera.position.z+forward.z*10);camera.lookAt(look);
- orb.rotation.y+=dt;ring.rotation.z+=dt*.4;renderer.render(scene,camera)}
+ scene.traverse(o=>{if(o.userData?.mixer)o.userData.mixer.update(dt)});renderer.render(scene,camera)}
 animate();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 </script>

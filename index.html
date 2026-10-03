@@ -526,8 +526,11 @@ for(let i=0;i<agents.length;i++){
   const windowW=1.05, windowBottom=1.45, windowTop=1.79;
   const frontW=2.72;
   const wallThickness=.045;
-  let p=localToWorld(0,frontZ);
-  addCollisionRect(p.x,p.z,frontW/2*scale,wallThickness*scale,angle);
+  const sideHalf=(frontW-1.05)/4;
+  for(const lx of [-(frontW+1.05)/4,(frontW+1.05)/4]){
+    const p=localToWorld(lx,frontZ);
+    addCollisionRect(p.x,p.z,sideHalf*scale,wallThickness*scale,angle);
+  }
 }
 
 // Cubicle U-shaped partitions. Back + left + right panels are collidable;

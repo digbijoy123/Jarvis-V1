@@ -14,9 +14,31 @@
 .help{position:absolute;left:14px;bottom:14px;background:rgba(9,13,20,.78);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:9px 11px;color:#8f9aaa;font-size:10px}
 #desktopControls{position:absolute;left:14px;bottom:14px;width:154px;height:116px;padding:10px;background:rgba(9,13,20,.78);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:14px;pointer-events:auto}.controlTitle{font-size:9px;color:#8f9aaa;margin:0 0 7px 2px;letter-spacing:.08em}.controlGrid{position:relative;width:132px;height:78px}.pad{position:absolute;width:40px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(12,17,25,.9);color:#fff;font-size:15px;font-weight:700;touch-action:none;user-select:none;cursor:pointer}.pad:active,.pad.active{transform:scale(.94);background:rgba(70,100,160,.75)}#d-up{left:46px;top:0}#d-left{left:0;top:40px}#d-down{left:46px;top:40px}#d-right{left:92px;top:40px}
 #mobileControls{display:none;position:absolute;inset:0;pointer-events:none}#moveStick,#lookZone{pointer-events:auto;position:absolute}#moveStick{left:24px;bottom:24px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(90,110,145,.24) 0 32%,rgba(30,38,52,.62) 33% 100%);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 35px rgba(0,0,0,.3)}#stickKnob{position:absolute;width:62px;height:62px;left:44px;top:44px;border-radius:50%;background:rgba(230,238,247,.9);box-shadow:0 4px 18px rgba(0,0,0,.35);transform:translate(0,0);pointer-events:none}#moveHint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:9px;color:#9da8b8;letter-spacing:.08em;pointer-events:none}#lookZone{right:0;top:0;width:58%;height:100%;background:transparent}#lookHint{position:absolute;right:18px;bottom:18px;padding:8px 10px;border-radius:999px;background:rgba(9,13,20,.5);border:1px solid rgba(255,255,255,.08);font-size:9px;color:#9da8b8;pointer-events:none}
-@media(max-width:700px){.help,#desktopControls{display:none}.panel{left:auto;right:12px;bottom:12px;width:min(360px,42vw);padding:12px}.panel .log,.panel p{display:none}.topbar{top:9px;left:12px;right:12px}.brand{padding:8px 11px}.brand b{font-size:12px}.brand small{font-size:9px}.status{padding:8px 11px}#mobileControls{display:block}}
-@media(max-width:700px) and (orientation:landscape){.panel{width:min(350px,34vw);max-height:43vh}.chat input{font-size:11px}.chat button{padding:0 12px}.panel h3{font-size:13px}#moveStick{left:24px;bottom:20px;width:138px;height:138px}#stickKnob{width:58px;height:58px;left:39px;top:39px}#lookZone{width:55%;height:calc(100% - 90px);top:60px}#lookHint{right:18px;bottom:18px}}
-@media(max-width:700px) and (orientation:portrait){#moveStick{bottom:190px}.panel{left:12px;right:12px;width:auto;bottom:12px}}
+.touch-device #mobileControls{display:block}
+.touch-device #desktopControls,.touch-device .help{display:none}
+.touch-device .hud{pointer-events:none}
+.touch-device .topbar{top:8px;left:10px;right:10px}
+.touch-device .brand{opacity:.52;padding:7px 9px}
+.touch-device .brand b{font-size:10px}
+.touch-device .brand small{display:none}
+.touch-device .status{opacity:.48;padding:6px 9px;font-size:9px}
+.touch-device .panel{right:10px;bottom:10px;width:min(320px,34vw);padding:10px;opacity:.72;pointer-events:auto}
+.touch-device .panel p,.touch-device .panel .log{display:none}
+.touch-device .panel h3{font-size:12px;margin-bottom:6px}
+.touch-device .chat input{font-size:11px;padding:8px}.touch-device .chat button{font-size:11px;padding:0 11px}
+.touch-device #moveStick{left:18px;bottom:18px;width:145px;height:145px;opacity:.68;z-index:20}
+.touch-device #stickKnob{width:58px;height:58px;left:43px;top:43px}
+.touch-device #lookZone{display:block;right:0;top:0;width:58%;height:100%;z-index:10;pointer-events:auto}
+.touch-device #lookHint{display:none}
+@media (orientation:landscape){
+ .touch-device .panel{width:min(320px,30vw);max-height:34vh}
+ .touch-device #moveStick{left:18px;bottom:18px;width:145px;height:145px}
+ .touch-device #stickKnob{left:43px;top:43px}
+}
+@media (orientation:portrait){
+ .touch-device .panel{left:10px;right:10px;width:auto;bottom:10px}
+ .touch-device #moveStick{bottom:170px}
+}
 </style>
 </head>
 <body>
@@ -53,7 +75,9 @@ const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,100);
 camera.position.set(0,4.2,10);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWidth,innerHeight);
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.getElementById('app').appendChild(renderer.domElement);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.domElement.style.touchAction='none';
+document.getElementById('app').appendChild(renderer.domElement);
 
 scene.add(new THREE.HemisphereLight(0xb9d4ff,0x18202b,2.0));
 const key=new THREE.DirectionalLight(0xffffff,2.6);key.position.set(4,10,5);key.castShadow=true;scene.add(key);
@@ -117,8 +141,10 @@ lookZone.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;const
 
 // Mouse look while pointer is locked; on mobile, camera stays fixed for now.
 let yaw=0,pitch=0;
-renderer.domElement.addEventListener('click',()=>{if(innerWidth>700) renderer.domElement.requestPointerLock?.()});
-addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement) yaw-=e.movementX*.0025});
+const isTouchDevice=navigator.maxTouchPoints>0 || matchMedia('(pointer:coarse)').matches;
+if(isTouchDevice) document.documentElement.classList.add('touch-device');
+renderer.domElement.addEventListener('click',()=>{if(!isTouchDevice) renderer.domElement.requestPointerLock?.()});
+addEventListener('mousemove',e=>{if(!isTouchDevice && document.pointerLockElement===renderer.domElement) yaw-=e.movementX*.0025});
 const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
 renderer.domElement.addEventListener('pointerdown',e=>{
  if(e.pointerType==='touch')return;

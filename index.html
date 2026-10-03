@@ -734,15 +734,40 @@ if(isTouchDevice) document.documentElement.classList.add('touch-device');
 renderer.domElement.addEventListener('click',()=>{if(!isTouchDevice) renderer.domElement.requestPointerLock?.()});
 addEventListener('mousemove',e=>{if(!isTouchDevice && document.pointerLockElement===renderer.domElement){yaw-=e.movementX*.0025*gameSettings.cameraSensitivity;pitch=THREE.MathUtils.clamp(pitch-e.movementY*.0025*gameSettings.cameraSensitivity,-1.5708,1.5708)}});
 const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
-renderer.domElement.addEventListener('pointerdown',e=>{
- if(e.pointerType==='touch')return;
- mouse.x=e.clientX/innerWidth*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;raycaster.setFromCamera(mouse,camera);
- const hit=raycaster.intersectObjects(clickable,true)[0];if(hit){
+function selectAtScreenPoint(clientX,clientY){
+ mouse.x=clientX/innerWidth*2-1;mouse.y=-(clientY/innerHeight)*2+1;
+ raycaster.setFromCamera(mouse,camera);
+ const hit=raycaster.intersectObjects(clickable,true)[0];
+ if(!hit)return false;
  let node=hit.object,a=null;
  while(node){if(node.userData?.name){a=node.userData;break}node=node.parent}
- if(a)selectAgent(a)
+ if(a){selectAgent(a);return true}
+ return false;
 }
+renderer.domElement.addEventListener('pointerdown',e=>{
+ if(e.pointerType==='touch')return;
+ selectAtScreenPoint(e.clientX,e.clientY);
 });
+// Mobile agent selection: a short tap selects the 3D agent/workstation.
+// The right-side look zone owns touch events on that half of the screen, so
+// it also performs the same tap test when the finger is released without a swipe.
+let mobileTapStart=null;
+function beginMobileTap(e){
+ if(e.pointerType!=='touch')return;
+ mobileTapStart={x:e.clientX,y:e.clientY,time:performance.now()};
+}
+function finishMobileTap(e){
+ if(e.pointerType!=='touch'||!mobileTapStart)return;
+ const dx=e.clientX-mobileTapStart.x,dy=e.clientY-mobileTapStart.y;
+ const elapsed=performance.now()-mobileTapStart.time;
+ const isTap=Math.hypot(dx,dy)<14&&elapsed<350;
+ mobileTapStart=null;
+ if(isTap)selectAtScreenPoint(e.clientX,e.clientY);
+}
+renderer.domElement.addEventListener('pointerdown',beginMobileTap);
+renderer.domElement.addEventListener('pointerup',finishMobileTap);
+lookZone.addEventListener('pointerdown',beginMobileTap);
+lookZone.addEventListener('pointerup',finishMobileTap);
 let selectedAgent=maxGroup.userData;
 document.getElementById('agentTitle').textContent=selectedAgent.name;
 document.getElementById('agentDesc').textContent=selectedAgent.role+' · AI slot ready';

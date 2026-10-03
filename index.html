@@ -531,11 +531,11 @@ workforceDisplayTexture.colorSpace=THREE.SRGBColorSpace;
 
 const workforceDisplayGroup=new THREE.Group();
 workforceDisplayGroup.name='AI Workforce Status Display';
-// Mount the status display low on the LAST wall at the far end of the corridor.
-// It sits close to eye level so it reads as a physical wall-mounted command board.
-workforceDisplayGroup.position.set(0,1.75,-16.84);
-// Face the screen toward the player approaching from the corridor.
-workforceDisplayGroup.rotation.y=0;
+// Mount the status display low on the OPPOSITE wall, across from the far wall.
+ // Keep it near eye level so it reads as a physical wall-mounted command board.
+workforceDisplayGroup.position.set(0,1.75,-12.16);
+// Face the screen down the corridor toward the player.
+workforceDisplayGroup.rotation.y=Math.PI;
 
 const workforceFrame=new THREE.Mesh(
   new THREE.BoxGeometry(4.35,2.25,.16),

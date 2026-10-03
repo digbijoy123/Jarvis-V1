@@ -531,7 +531,10 @@ workforceDisplayTexture.colorSpace=THREE.SRGBColorSpace;
 
 const workforceDisplayGroup=new THREE.Group();
 workforceDisplayGroup.name='AI Workforce Status Display';
-workforceDisplayGroup.position.set(0,3.15,-16.84);
+// Mount the status display on the opposite/front wall of the central corridor.
+// The screen faces back into the corridor so the player sees it from the main approach.
+workforceDisplayGroup.position.set(0,3.15,-12.16);
+workforceDisplayGroup.rotation.y=Math.PI;
 
 const workforceFrame=new THREE.Mesh(
   new THREE.BoxGeometry(4.35,2.25,.16),

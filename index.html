@@ -319,7 +319,6 @@ lookZone.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;const
 let yaw=0,pitch=0;
 const isTouchDevice=navigator.maxTouchPoints>0 || matchMedia('(pointer:coarse)').matches;
 if(isTouchDevice) document.documentElement.classList.add('touch-device');
-applySettings();
 renderer.domElement.addEventListener('click',()=>{if(!isTouchDevice) renderer.domElement.requestPointerLock?.()});
 addEventListener('mousemove',e=>{if(!isTouchDevice && document.pointerLockElement===renderer.domElement) yaw-=e.movementX*.0025*gameSettings.cameraSensitivity});
 const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
@@ -402,6 +401,8 @@ bindSetting('joystickOpacity','joystickOpacity');
 bindSetting('touchSensitivity','touchSensitivity');
 bindSetting('showControls','showControls','bool');
 bindSetting('uiOpacity','uiOpacity');
+applySettings();
+
 const clock=new THREE.Clock();
 const PLAYER_EYE_HEIGHT=1.72;
 const GRAVITY=-18;

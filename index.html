@@ -939,13 +939,15 @@ function walkAgentToMax(agentGroup,task){
  walker.getWorldPosition(worldPosition);
  const worldRotation=new THREE.Euler().setFromQuaternion(walker.getWorldQuaternion(new THREE.Quaternion()));
  const start=worldPosition.clone(),sideX=start.x<0?-1.7:1.7;
+ // Travel on the actual floor: the seated model's feet sit ~0.125m below its origin.
+ const travelY=-0.12;
  walker.userData.walking=true;walker.userData.agentName=agentGroup.userData.name;
  walker.userData.originalParent=agentGroup;walker.userData.homePosition=start.clone();
  walker.userData.homeLocalPosition=walker.position.clone();walker.userData.homeLocalRotation=walker.rotation.clone();
  walker.userData.walkTime=0;
  walker.userData.walkWaypoints=[
-  new THREE.Vector3(sideX,1.0,start.z),new THREE.Vector3(0,1.0,start.z),
-  new THREE.Vector3(0,1.0,-14.0),new THREE.Vector3(2.2,1.0,-14.7),new THREE.Vector3(5.2,1.0,-15.65)
+  new THREE.Vector3(sideX,travelY,start.z),new THREE.Vector3(0,travelY,start.z),
+  new THREE.Vector3(0,travelY,-14.0),new THREE.Vector3(2.2,travelY,-14.7),new THREE.Vector3(5.2,travelY,-15.65)
  ];
  walker.userData.walkIndex=0;walker.userData.walkTask=task;walker.userData.walkPhase='TO_MAX';
  walker.userData.executionStarted=false;
@@ -956,7 +958,7 @@ function walkAgentToMax(agentGroup,task){
   const fill=indicator.getObjectByName('work-bar-fill');
   if(fill){fill.scale.x=.02;fill.position.x=-.625}
  }
- agentGroup.remove(walker);scene.add(walker);walker.position.copy(start);walker.rotation.copy(worldRotation);
+ agentGroup.remove(walker);scene.add(walker);walker.position.set(start.x,travelY,start.z);walker.rotation.copy(worldRotation);
  workforceStatus[agentGroup.userData.name].status='WORKING';
  workforceStatus[agentGroup.userData.name].task=task;workforceStatus[agentGroup.userData.name].progress=0;drawWorkforceDisplay();
 }
@@ -1049,11 +1051,12 @@ function updateWalkingAgents(dt){
     }
     if(u.executionDone&&u.walkTime>1.0){
       u.walkPhase='RETURN';u.walkTime=0;
+      const travelY=-0.12;
       u.walkWaypoints=[
-        new THREE.Vector3(2.2,1.0,-14.7),new THREE.Vector3(0,1.0,-14.0),
-        new THREE.Vector3(0,1.0,u.homePosition.z),
-        new THREE.Vector3(u.homePosition.x<0?-1.7:1.7,1.0,u.homePosition.z),
-        u.homePosition.clone()
+        new THREE.Vector3(2.2,travelY,-14.7),new THREE.Vector3(0,travelY,-14.0),
+        new THREE.Vector3(0,travelY,u.homePosition.z),
+        new THREE.Vector3(u.homePosition.x<0?-1.7:1.7,travelY,u.homePosition.z),
+        new THREE.Vector3(u.homePosition.x,travelY,u.homePosition.z)
       ];
       u.walkIndex=0;
     }

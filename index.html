@@ -367,13 +367,17 @@ const agents=[
  {name:'DEVOPS',role:'GitHub deployment and infrastructure',pos:[0,0,-5.4],color:0x8aa6ff}
 ];
 
-// Controlled cubicle layout for the 11 active specialist agents.
-// No placeholder/open-slot cubicle is created.
+// Symmetrical two-bank office layout matching the reference view.
+// Eleven active specialist workstations flank one clear central corridor.
 const CUBICLE_LAYOUT=[
-  [-5.75, 9.55,-0.075,1.00], [ 0.10, 9.85, 0.045,.96], [ 5.70, 9.25, 0.085,1.01],
-  [-4.85, 4.35, 0.060,.98],  [ 0.75, 4.05,-0.095,1.03], [ 5.15, 4.65,-0.055,.97],
-  [-5.55,-0.80, 0.095,1.02], [ 0.00,-0.45,-0.055,.97], [ 5.65,-1.00, 0.075,1.01],
-  [-4.85,-5.70,-0.065,.98], [ 0.80,-5.35, 0.085,1.02]
+  // Left bank — agents face inward toward the central corridor.
+  [-4.75, 9.25, 1.5708, 1.00], [-4.75, 5.05, 1.5708, .98],
+  [-4.75, 0.85, 1.5708, 1.01], [-4.75,-3.35, 1.5708, .99],
+  [-4.75,-7.55, 1.5708, 1.01], [-4.75,-11.35, 1.5708, .98],
+  // Right bank — agents face inward toward the central corridor.
+  [ 4.75, 9.25,-1.5708, 1.00], [ 4.75, 5.05,-1.5708, .98],
+  [ 4.75, 0.85,-1.5708, 1.01], [ 4.75,-3.35,-1.5708, .99],
+  [ 4.75,-7.55,-1.5708, 1.01]
 ];
 const CUBICLE_BY_NAME=new Map(agents.map((a,i)=>[a.name,CUBICLE_LAYOUT[i]]));
 function makeAgent(a){
@@ -477,7 +481,8 @@ function makeAgent(a){
     drawer.position.set(x,.51,-.2);g.add(drawer);
   }
 
-  const screen=new THREE.Mesh(new THREE.BoxGeometry(1.05,.65,.07),new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.6,roughness:.28,metalness:.2,flatShading:true}));
+  const screenMat=new THREE.MeshStandardMaterial({color:0x050505,emissive:0x000000,emissiveIntensity:0,roughness:.32,metalness:.12,flatShading:true});
+  const screen=new THREE.Mesh(new THREE.BoxGeometry(1.05,.65,.07),screenMat);
   screen.position.set(0,1.18,-.22);screen.userData.agent=a;g.add(screen);
   const stand=new THREE.Mesh(new THREE.BoxGeometry(.08,.3,.08),lowPolyMat(0x263247,{metalness:.35}));stand.position.set(0,.87,-.22);g.add(stand);
   const keyboard=new THREE.Mesh(new THREE.BoxGeometry(.62,.025,.22),lowPolyMat(0x111722,{roughness:.3,metalness:.55}));keyboard.position.set(0,.81,.15);g.add(keyboard);

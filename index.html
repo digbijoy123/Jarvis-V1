@@ -112,11 +112,12 @@
   <div id="crosshair" aria-hidden="true"></div>
   <div id="desktopControls"><div class="controlTitle">MOVE · WASD / ARROWS</div><div class="controlGrid">
     <button class="pad" id="d-up">W</button><button class="pad" id="d-left">A</button><button class="pad" id="d-down">S</button><button class="pad" id="d-right">D</button>
-  </div><div id="desktopActions"><button class="actionBtn" id="d-run">RUN · SHIFT</button><button class="actionBtn" id="d-jump">JUMP · SPACE</button></div></div>
+  </div><div id="desktopActions"><button class="actionBtn" id="d-interact">INTERACT</button><button class="actionBtn" id="d-run">RUN · SHIFT</button><button class="actionBtn" id="d-jump">JUMP · SPACE</button></div></div>
   <div id="mobileControls">
     <div id="moveStick"><div id="stickKnob"></div><div id="moveHint">MOVE</div></div>
     <div id="lookZone"><div id="lookHint">SWIPE RIGHT SIDE · LOOK</div></div>
     <div id="mobileActions">
+      <button class="actionBtn" id="m-interact">INTERACT</button>
       <button class="actionBtn" id="m-jump">JUMP</button>
       <button class="actionBtn" id="m-run">RUN</button>
     </div>
@@ -718,6 +719,8 @@ stick.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();
 stick.addEventListener('pointermove',e=>{if(e.pointerId!==stickId)return;e.preventDefault();const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.31;let dx=e.clientX-cx,dy=e.clientY-cy,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max}knob.style.transform='translate('+dx+'px,'+dy+'px)';joyX=dx/max;joyZ=-dy/max});
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>stick.addEventListener(t,e=>{if(e.pointerId===stickId){stickId=null;resetStick()}}));
 function bindActionButton(id,down,up=()=>{}){const b=document.getElementById(id);if(!b)return;const press=e=>{e.preventDefault();e.stopPropagation();down();b.classList.add('active');if(b.setPointerCapture)b.setPointerCapture(e.pointerId)};const release=e=>{e.preventDefault();e.stopPropagation();up();b.classList.remove('active')};b.addEventListener('pointerdown',press);b.addEventListener('pointerup',release);b.addEventListener('pointercancel',release);b.addEventListener('pointerleave',release);b.addEventListener('lostpointercapture',release)}
+bindActionButton('d-interact',interactWithCrosshair);
+bindActionButton('m-interact',interactWithCrosshair);
 bindActionButton('d-run',()=>{isRunning=true},()=>{isRunning=false});
 bindActionButton('m-run',()=>{isRunning=true},()=>{isRunning=false});
 bindActionButton('d-jump',()=>{jumpRequested=true});
@@ -734,6 +737,10 @@ if(isTouchDevice) document.documentElement.classList.add('touch-device');
 renderer.domElement.addEventListener('click',()=>{if(!isTouchDevice) renderer.domElement.requestPointerLock?.()});
 addEventListener('mousemove',e=>{if(!isTouchDevice && document.pointerLockElement===renderer.domElement){yaw-=e.movementX*.0025*gameSettings.cameraSensitivity;pitch=THREE.MathUtils.clamp(pitch-e.movementY*.0025*gameSettings.cameraSensitivity,-1.5708,1.5708)}});
 const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
+function interactWithCrosshair(){
+ const selected=selectAtScreenPoint(innerWidth/2,innerHeight/2);
+ if(!selected)addLog('MAX','Nothing interactable is under the crosshair.');
+}
 function selectAtScreenPoint(clientX,clientY){
  mouse.x=clientX/innerWidth*2-1;mouse.y=-(clientY/innerHeight)*2+1;
  raycaster.setFromCamera(mouse,camera);

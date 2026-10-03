@@ -121,8 +121,8 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
 
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x0b1220);
-scene.fog=new THREE.Fog(0x0b1220,22,46);
+scene.background=new THREE.Color(0x17100c);
+scene.fog=new THREE.Fog(0x17100c,22,46);
 const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,100);
 camera.position.set(0,1.72,-14.7);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
@@ -132,23 +132,23 @@ renderer.domElement.style.touchAction='none';
 document.getElementById('app').appendChild(renderer.domElement);
 
 
-scene.add(new THREE.HemisphereLight(0xdce9ff,0x273447,2.6));
-const key=new THREE.DirectionalLight(0xffffff,3.2);key.position.set(4,10,6);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
-const fill=new THREE.PointLight(0x6d8cff,24,26);fill.position.set(0,5,1);scene.add(fill);
-for(const [z,color] of [[15,0x5b8cff],[5,0xa86cff],[-5,0x35d7b0],[-15,0xffb24d]]){
+scene.add(new THREE.HemisphereLight(0xffead0,0x3a2418,3.0));
+const key=new THREE.DirectionalLight(0xffd7a3,3.8);key.position.set(4,10,6);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
+const fill=new THREE.PointLight(0xff9f52,18,28);fill.position.set(0,5,1);scene.add(fill);
+for(const [z,color] of [[15,0xffb45e],[5,0xff8a4d],[-5,0xffc46b],[-15,0xff7a45]]){
  const l=new THREE.PointLight(color,9,9);l.position.set(0,4.8,z);scene.add(l);
 }
 
 function box(name,size,pos,color,opts={}){const m=new THREE.MeshStandardMaterial({color,roughness:.72,metalness:opts.metalness||0});const o=new THREE.Mesh(new THREE.BoxGeometry(...size),m);o.name=name;o.position.set(...pos);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
 
-const wallMat=new THREE.MeshStandardMaterial({color:0x172231,roughness:.78,flatShading:true});
-const floorMat=new THREE.MeshStandardMaterial({color:0x202b3b,roughness:.86,flatShading:true});
-const trimMat=new THREE.MeshStandardMaterial({color:0x3b4b63,roughness:.5,metalness:.35,flatShading:true});
-const glassMat=new THREE.MeshPhysicalMaterial({color:0x7fb5ff,transparent:true,opacity:.19,roughness:.2,metalness:.08});
-box('hall-floor',[18,.3,42],[0,-.15,3],0x202b3b);
-box('hall-left-wall',[.3,6,42],[-9,3,3],0x141e2b);
-box('hall-right-wall',[.3,6,42],[9,3,3],0x141e2b);
-box('hall-ceiling',[18,.25,42],[0,6.3,3],0x101722);
+const wallMat=new THREE.MeshStandardMaterial({color:0x2a211d,roughness:.78,flatShading:true});
+const floorMat=new THREE.MeshStandardMaterial({color:0x3a2a21,roughness:.86,flatShading:true});
+const trimMat=new THREE.MeshStandardMaterial({color:0x6b4930,roughness:.5,metalness:.35,flatShading:true});
+const glassMat=new THREE.MeshPhysicalMaterial({color:0xffc98a,transparent:true,opacity:.16,roughness:.2,metalness:.08});
+box('hall-floor',[18,.3,42],[0,-.15,3],0x3a2a21);
+box('hall-left-wall',[.3,6,42],[-9,3,3],0x211914);
+box('hall-right-wall',[.3,6,42],[9,3,3],0x211914);
+box('hall-ceiling',[18,.25,42],[0,6.3,3],0x17110d);
 
 // Architectural trim and wall panels.
 for(const x of [-8.75,8.75]) for(let z=18;z>=-17;z-=4){
@@ -157,7 +157,7 @@ for(const x of [-8.75,8.75]) for(let z=18;z>=-17;z-=4){
 }
 // Rectangular hallway windows replace the distracting blue floor-line strips.
 const hallWindowMat=new THREE.MeshStandardMaterial({
- color:0x30486a,emissive:0x162b4b,emissiveIntensity:.35,
+ color:0x6b4935,emissive:0x3b1f10,emissiveIntensity:.42,
  roughness:.3,metalness:.08,transparent:true,opacity:.82
 });
 for(let z=15;z>=-13;z-=7){
@@ -171,9 +171,9 @@ for(let z=15;z>=-13;z-=7){
  }
 }
 for(let z=18;z>=-16;z-=4){
- const light=box('ceiling-light',[3.0,.08,.5],[0,6.12,z],0xcddcff,{metalness:.1});
- light.material.emissive=new THREE.Color(0x9fbfff);light.material.emissiveIntensity=.6;
- const pendant=box('ceiling-frame',[4.6,.06,.06],[0,6.03,z],0x39465a,{metalness:.4});
+ const light=box('ceiling-light',[3.0,.08,.5],[0,6.12,z],0xffd39b,{metalness:.1});
+ light.material.emissive=new THREE.Color(0xffa94f);light.material.emissiveIntensity=.9;
+ const pendant=box('ceiling-frame',[4.6,.06,.06],[0,6.03,z],0x6b4930,{metalness:.4});
 }
 
 // === OFFICE PLAN — user's hand-drawn top-view layout ===
@@ -226,7 +226,7 @@ box('max-corridor-wall-back',[.16,3,1.4],[CORRIDOR_HALF,1.5,-16.3],0x182536);
 // Central corridor floor, open to the main hall.
 const centerCorridorFloor=new THREE.Mesh(
   new THREE.BoxGeometry(CORRIDOR_HALF*2,.035,ROOM_BACK-ROOM_FRONT),
-  new THREE.MeshStandardMaterial({color:0x263447,roughness:.88,flatShading:true})
+  new THREE.MeshStandardMaterial({color:0x4a3327,roughness:.88,flatShading:true})
 );
 centerCorridorFloor.position.set(0,.03,(ROOM_BACK+ROOM_FRONT)/2);
 scene.add(centerCorridorFloor);
@@ -400,9 +400,9 @@ function makeAgent(a){
  }else{
   // Reference-style U-shaped workstation: two side privacy panels + a full back panel,
   // leaving the front open for the chair and player access.
-  const panelFrame=lowPolyMat(0xb8c2cf,{roughness:.58,metalness:.22});
-  const panelUpper=lowPolyMat(0x6d7f92,{roughness:.86});
-  const panelLower=lowPolyMat(0x253448,{roughness:.72,metalness:.08});
+  const panelFrame=lowPolyMat(0xd7b58f,{roughness:.58,metalness:.22});
+  const panelUpper=lowPolyMat(0x9a6b45,{roughness:.78});
+  const panelLower=lowPolyMat(0x4a3022,{roughness:.72,metalness:.08});
   const panelHeight=1.72, panelY=1.02;
 
   function addPartition(name,size,pos,vertical=true){
@@ -423,8 +423,8 @@ function makeAgent(a){
   // The front (+Z) remains completely open for the chair and player access.
   const windowY=1.62, windowW=1.05, windowH=.34;
   const windowBottom=windowY-windowH/2, windowTop=windowY+windowH/2;
-  const backWallMat=lowPolyMat(0xb8c2cf,{roughness:.58,metalness:.22});
-  const backFrame=lowPolyMat(0x8795a8,{roughness:.58,metalness:.24});
+  const backWallMat=lowPolyMat(0xd7b58f,{roughness:.58,metalness:.22});
+  const backFrame=lowPolyMat(0x8b5a35,{roughness:.58,metalness:.24});
   const backZ=-.76;
   const backW=2.72;
 
@@ -461,8 +461,8 @@ function makeAgent(a){
   const frontZ=1.07;
   const frontW=2.72;
   const lowerH=.78;
-  const frontMat=lowPolyMat(0xb8c2cf,{roughness:.58,metalness:.22});
-  const frontFrame=lowPolyMat(0x8795a8,{roughness:.58,metalness:.24});
+  const frontMat=lowPolyMat(0xd7b58f,{roughness:.58,metalness:.22});
+  const frontFrame=lowPolyMat(0x8b5a35,{roughness:.58,metalness:.24});
 
   for(const x of [-frontW/2+.045,frontW/2-.045]){
     const post=new THREE.Mesh(new THREE.BoxGeometry(.09,panelHeight,.09),frontFrame);
@@ -471,24 +471,24 @@ function makeAgent(a){
   }
 
   // Clean work surface spanning between the privacy panels.
-  const desk=new THREE.Mesh(new THREE.BoxGeometry(2.42,.12,1.04),lowPolyMat(0xe5e9ee,{roughness:.55,metalness:.12}));
+  const desk=new THREE.Mesh(new THREE.BoxGeometry(2.42,.12,1.04),lowPolyMat(0xb9824f,{roughness:.55,metalness:.12}));
   desk.position.set(0,.72,.18);desk.castShadow=true;desk.receiveShadow=true;g.add(desk);
 
   // Compact pedestal supports give the desk the furniture-like look of the reference.
   for(const x of [-.9,.9]){
-    const pedestal=new THREE.Mesh(new THREE.BoxGeometry(.38,.62,.78),lowPolyMat(0x202a38,{roughness:.7,metalness:.18}));
+    const pedestal=new THREE.Mesh(new THREE.BoxGeometry(.38,.62,.78),lowPolyMat(0x2f211a,{roughness:.7,metalness:.18}));
     pedestal.position.set(x,.38,.2);pedestal.castShadow=true;pedestal.receiveShadow=true;g.add(pedestal);
-    const drawer=new THREE.Mesh(new THREE.BoxGeometry(.3,.045,.68),lowPolyMat(0x344257,{roughness:.65,metalness:.12}));
+    const drawer=new THREE.Mesh(new THREE.BoxGeometry(.3,.045,.68),lowPolyMat(0x60422e,{roughness:.65,metalness:.12}));
     drawer.position.set(x,.51,-.2);g.add(drawer);
   }
 
   const screenMat=new THREE.MeshStandardMaterial({color:0x050505,emissive:0x000000,emissiveIntensity:0,roughness:.32,metalness:.12,flatShading:true});
   const screen=new THREE.Mesh(new THREE.BoxGeometry(1.05,.65,.07),screenMat);
   screen.position.set(0,1.18,-.22);screen.userData.agent=a;g.add(screen);
-  const stand=new THREE.Mesh(new THREE.BoxGeometry(.08,.3,.08),lowPolyMat(0x263247,{metalness:.35}));stand.position.set(0,.87,-.22);g.add(stand);
+  const stand=new THREE.Mesh(new THREE.BoxGeometry(.08,.3,.08),lowPolyMat(0x5a422f,{metalness:.35}));stand.position.set(0,.87,-.22);g.add(stand);
   const keyboard=new THREE.Mesh(new THREE.BoxGeometry(.62,.025,.22),lowPolyMat(0x111722,{roughness:.3,metalness:.55}));keyboard.position.set(0,.81,.15);g.add(keyboard);
-  const chairSeat=new THREE.Mesh(new THREE.CylinderGeometry(.38,.44,.14,8),lowPolyMat(0x253044,{roughness:.8}));chairSeat.position.set(0,.48,1.02);chairSeat.castShadow=true;g.add(chairSeat);
-  const chairBack=new THREE.Mesh(new THREE.BoxGeometry(.64,.78,.13),lowPolyMat(0x202a3a,{roughness:.75}));chairBack.position.set(0,.88,1.2);chairBack.castShadow=true;g.add(chairBack);
+  const chairSeat=new THREE.Mesh(new THREE.CylinderGeometry(.38,.44,.14,8),lowPolyMat(0x3b2a22,{roughness:.8}));chairSeat.position.set(0,.48,1.02);chairSeat.castShadow=true;g.add(chairSeat);
+  const chairBack=new THREE.Mesh(new THREE.BoxGeometry(.64,.78,.13),lowPolyMat(0x2b201b,{roughness:.75}));chairBack.position.set(0,.88,1.2);chairBack.castShadow=true;g.add(chairBack);
   const model=createLowPolyAgentModel(a.color,false);model.position.set(0,0,.72);model.rotation.y=0;g.add(model);g.userData.agentModel=model;
  }
  const label=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.name),transparent:true}));
@@ -590,7 +590,7 @@ lookZone.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;const
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>lookZone.addEventListener(t,e=>{if(e.pointerId===lookId)lookId=null}));
 
 // Mouse look while pointer is locked; on mobile, camera stays fixed for now.
-let yaw=0,pitch=0;
+let yaw=Math.PI,pitch=0;
 const isTouchDevice=navigator.maxTouchPoints>0 || matchMedia('(pointer:coarse)').matches;
 if(isTouchDevice) document.documentElement.classList.add('touch-device');
 renderer.domElement.addEventListener('click',()=>{if(!isTouchDevice) renderer.domElement.requestPointerLock?.()});

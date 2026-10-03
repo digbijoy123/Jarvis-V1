@@ -243,6 +243,41 @@ for(const x of [-CORRIDOR_HALF,CORRIDOR_HALF]){
 box('front-wall-left',[7.05,3,.16],[-4.725,1.5,ROOM_FRONT],0x162230);
 box('front-wall-right',[7.05,3,.16],[4.725,1.5,ROOM_FRONT],0x162230);
 
+// Two lightweight rectangular windows on the front architectural wall.
+// These are simple opaque/emissive panels — no transparent cubicle materials.
+const frontWindowMat=new THREE.MeshStandardMaterial({
+  color:0x31557d,
+  emissive:0x173250,
+  emissiveIntensity:.42,
+  roughness:.34,
+  metalness:.08
+});
+function addFrontWindow(x){
+  const w=new THREE.Mesh(new THREE.BoxGeometry(2.25,1.35,.045),frontWindowMat);
+  w.position.set(x,2.0,ROOM_FRONT-.095);
+  w.castShadow=false;
+  w.receiveShadow=false;
+  scene.add(w);
+
+  const frameMat=new THREE.MeshStandardMaterial({color:0x718197,roughness:.55,metalness:.3});
+  for(const [sx,sy,sw,sh] of [
+    [x-1.17,2.0,.07,1.48],
+    [x+1.17,2.0,.07,1.48],
+    [x,2.73,2.41,.07],
+    [x,1.27,2.41,.07]
+  ]){
+    const frame=new THREE.Mesh(new THREE.BoxGeometry(sw,sh,.075),frameMat);
+    frame.position.set(sx,sy,ROOM_FRONT-.13);
+    frame.castShadow=true;
+    scene.add(frame);
+  }
+  const mullion=new THREE.Mesh(new THREE.BoxGeometry(.055,1.35,.08),frameMat);
+  mullion.position.set(x,2.0,ROOM_FRONT-.14);
+  scene.add(mullion);
+}
+addFrontWindow(-4.35);
+addFrontWindow(4.35);
+
 // Conference floor + furniture.
 const conferenceFloor=new THREE.Mesh(new THREE.BoxGeometry(7.0,.035,4.4),new THREE.MeshStandardMaterial({color:0x202d40,roughness:.92,flatShading:true}));
 conferenceFloor.position.set(-4.725,.03,-14.7);scene.add(conferenceFloor);

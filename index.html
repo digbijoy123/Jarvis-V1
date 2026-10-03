@@ -184,58 +184,71 @@ box('entrance-threshold',[4,.12,.55],[0,.08,18.9],0x526b99,{metalness:.25});
 const entranceLight=box('entrance-light',[3,.035,.08],[0,.16,18.65],0x75a8ff);
 entranceLight.material.emissive=new THREE.Color(0x4d8dff);entranceLight.material.emissiveIntensity=.9;
 
-// Conference room — upper left.
-// Back wall with a centered panoramic window opening.
-box('conference-back-left',[1.7,3,.16],[-6.75,1.5,-17],0x1a2535);
-box('conference-back-right',[1.7,3,.16],[-2.25,1.5,-17],0x1a2535);
-box('conference-back-window-sill',[3.0,.22,.18],[-4.5,1.02,-17],0x2b394d,{metalness:.2});
-const conferenceWindow=new THREE.Mesh(new THREE.BoxGeometry(3.0,1.65,.045),glassMat);
-conferenceWindow.position.set(-4.5,2.0,-16.91);conferenceWindow.castShadow=false;scene.add(conferenceWindow);
-for(const x of [-6.0,-3.0]) box('conference-window-frame',[.09,1.8,.12],[x,2.0,-16.88],0x6d83a8,{metalness:.45});
-box('conference-window-frame-top',[3.1,.09,.12],[-4.5,2.86,-16.88],0x6d83a8,{metalness:.45});
-box('conference-window-frame-bottom',[3.1,.09,.12],[-4.5,1.14,-16.88],0x6d83a8,{metalness:.45});
-box('conference-window-mullion',[.07,1.65,.1],[-4.5,2.0,-16.86],0x6d83a8,{metalness:.45});
-box('conference-left',[.16,3,4.8],[-8.25,1.5,-14.7],0x1a2535);
-box('conference-divider',[.16,3,2.15],[-.75,1.5,-15.65],0x1a2535);
-box('conference-divider-top',[.16,3,.95],[-.75,1.5,-12.75],0x1a2535);
-// Front walls with centered open doorways: the rooms are enclosed except for the open entrances.
-box('conference-front-left',[2.0,3,.16],[-6.0,1.5,-12.3],0x1a2535);
-box('conference-front-right',[2.25,3,.16],[-1.625,1.5,-12.3],0x1a2535);
-box('max-office-front-left',[2.25,3,.16],[2.375,1.5,-12.3],0x101925);
-box('max-office-front-right',[2.0,3,.16],[6.0,1.5,-12.3],0x101925);
-const conferenceDoorFrameL=box('conference-door-frame-left',[.08,3,.12],[-4.0,1.5,-12.3],0x69778c,{metalness:.35});
-const conferenceDoorFrameR=box('conference-door-frame-right',[.08,3,.12],[-3.0,1.5,-12.3],0x69778c,{metalness:.35});
-const maxDoorFrameL=box('max-door-frame-left',[.08,3,.12],[4.0,1.5,-12.3],0x69778c,{metalness:.35});
-const maxDoorFrameR=box('max-door-frame-right',[.08,3,.12],[5.0,1.5,-12.3],0x69778c,{metalness:.35});
-const conferenceFloor=new THREE.Mesh(new THREE.BoxGeometry(7.0,.035,4.4),new THREE.MeshStandardMaterial({color:0x202d40,roughness:.92,flatShading:true}));
-conferenceFloor.position.set(-4.5,.03,-14.7);scene.add(conferenceFloor);
-const conferenceTable=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.12,12),new THREE.MeshStandardMaterial({color:0x303d51,roughness:.6,metalness:.2,flatShading:true}));
-conferenceTable.position.set(-4.5,.75,-14.7);conferenceTable.castShadow=true;scene.add(conferenceTable);
-const conferenceBase=new THREE.Mesh(new THREE.CylinderGeometry(.28,.38,.68,8),new THREE.MeshStandardMaterial({color:0x202a39,roughness:.55,metalness:.3,flatShading:true}));
-conferenceBase.position.set(-4.5,.39,-14.7);conferenceBase.castShadow=true;scene.add(conferenceBase);
-for(let i=0;i<8;i++){const a=i*Math.PI/4;const chair=new THREE.Mesh(new THREE.CylinderGeometry(.25,.3,.16,8),new THREE.MeshStandardMaterial({color:0x465876,roughness:.7,flatShading:true}));chair.position.set(-4.5+Math.cos(a)*1.65,.35,-14.7+Math.sin(a)*1.65);chair.castShadow=true;scene.add(chair)}
+// Conference + Max rooms — corrected Fig-2 layout.
+// One large outer rectangle, a single shared center partition, and one
+// centered entrance opening in the front wall. No side-by-side front doors.
 
-// Max's private office — upper right.
-// Max office back wall with a matching panoramic window opening.
-box('max-office-back-left',[1.7,3,.16],[2.25,1.5,-17],0x101925);
-box('max-office-back-right',[1.7,3,.16],[6.75,1.5,-17],0x101925);
-box('max-office-window-sill',[3.0,.22,.18],[4.5,1.02,-17],0x2b3445,{metalness:.2});
-const maxWindow=new THREE.Mesh(new THREE.BoxGeometry(3.0,1.65,.045),glassMat);
-maxWindow.position.set(4.5,2.0,-16.91);maxWindow.castShadow=false;scene.add(maxWindow);
-for(const x of [3.0,6.0]) box('max-window-frame',[.09,1.8,.12],[x,2.0,-16.88],0x7487ae,{metalness:.45});
-box('max-window-frame-top',[3.1,.09,.12],[4.5,2.86,-16.88],0x7487ae,{metalness:.45});
-box('max-window-frame-bottom',[3.1,.09,.12],[4.5,1.14,-16.88],0x7487ae,{metalness:.45});
-box('max-window-mullion',[.07,1.65,.1],[4.5,2.0,-16.86],0x7487ae,{metalness:.45});
+const ROOM_LEFT=-4.125;
+const ROOM_RIGHT=4.125;
+const ROOM_BACK=-17;
+const ROOM_FRONT=-12.3;
+const CENTER_DOOR_HALF=1.05;
+
+// Conference room: left half.
+box('conference-back-left',[3.35,3,.16],[-5.8,1.5,ROOM_BACK],0x1a2535);
+box('conference-back-right',[1.35,3,.16],[-1.65,1.5,ROOM_BACK],0x1a2535);
+box('conference-left',[.16,3,4.8],[-8.25,1.5,-14.7],0x1a2535);
+
+// Conference rear window.
+box('conference-back-window-sill',[3.7,.22,.18],[-4.125,1.02,ROOM_BACK],0x2b394d,{metalness:.2});
+const conferenceWindow=new THREE.Mesh(new THREE.BoxGeometry(3.7,1.65,.045),glassMat);
+conferenceWindow.position.set(-4.125,2.0,ROOM_BACK+.09);conferenceWindow.castShadow=false;scene.add(conferenceWindow);
+for(const x of [-5.975,-2.275]) box('conference-window-frame',[.09,1.8,.12],[x,2.0,ROOM_BACK+.12],0x6d83a8,{metalness:.45});
+box('conference-window-frame-top',[3.8,.09,.12],[-4.125,2.86,ROOM_BACK+.12],0x6d83a8,{metalness:.45});
+box('conference-window-frame-bottom',[3.8,.09,.12],[-4.125,1.14,ROOM_BACK+.12],0x6d83a8,{metalness:.45});
+box('conference-window-mullion',[.07,1.65,.1],[-4.125,2.0,ROOM_BACK+.14],0x6d83a8,{metalness:.45});
+
+// Shared center wall — solid from the rear until the centered doorway zone.
+box('shared-center-wall-back',[.16,3,3.9],[0,1.5,-15.35],0x182536);
+box('shared-center-wall-front-left',[.16,3,1.05],[-0.975,1.5,-12.82],0x182536);
+box('shared-center-wall-front-right',[.16,3,1.05],[0.975,1.5,-12.82],0x182536);
+
+// Front exterior wall with ONE centered entrance opening.
+box('front-wall-left',[6.15,3,.16],[-4.125-CENTER_DOOR_HALF-3.075/2+0.0,1.5,ROOM_FRONT],0x162230);
+box('front-wall-right',[6.15,3,.16],[4.125+CENTER_DOOR_HALF+3.075/2-0.0,1.5,ROOM_FRONT],0x162230);
+const sharedDoorFrameL=box('shared-door-frame-left',[.08,3,.12],[-CENTER_DOOR_HALF,1.5,ROOM_FRONT],0x69778c,{metalness:.35});
+const sharedDoorFrameR=box('shared-door-frame-right',[.08,3,.12],[CENTER_DOOR_HALF,1.5,ROOM_FRONT],0x69778c,{metalness:.35});
+
+// Conference floor + furniture.
+const conferenceFloor=new THREE.Mesh(new THREE.BoxGeometry(7.8,.035,4.4),new THREE.MeshStandardMaterial({color:0x202d40,roughness:.92,flatShading:true}));
+conferenceFloor.position.set(ROOM_LEFT,.03,-14.7);scene.add(conferenceFloor);
+const conferenceTable=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.12,12),new THREE.MeshStandardMaterial({color:0x303d51,roughness:.6,metalness:.2,flatShading:true}));
+conferenceTable.position.set(ROOM_LEFT,.75,-14.7);conferenceTable.castShadow=true;scene.add(conferenceTable);
+const conferenceBase=new THREE.Mesh(new THREE.CylinderGeometry(.28,.38,.68,8),new THREE.MeshStandardMaterial({color:0x202a39,roughness:.55,metalness:.3,flatShading:true}));
+conferenceBase.position.set(ROOM_LEFT,.39,-14.7);conferenceBase.castShadow=true;scene.add(conferenceBase);
+for(let i=0;i<8;i++){const a=i*Math.PI/4;const chair=new THREE.Mesh(new THREE.CylinderGeometry(.25,.3,.16,8),new THREE.MeshStandardMaterial({color:0x465876,roughness:.7,flatShading:true}));chair.position.set(ROOM_LEFT+Math.cos(a)*1.65,.35,-14.7+Math.sin(a)*1.65);chair.castShadow=true;scene.add(chair)}
+
+// Max private office: right half, sharing the same outer rectangle.
+box('max-office-back-left',[1.35,3,.16],[1.65,1.5,ROOM_BACK],0x101925);
+box('max-office-back-right',[3.35,3,.16],[5.8,1.5,ROOM_BACK],0x101925);
 box('max-office-right',[.16,3,4.8],[8.25,1.5,-14.7],0x101925);
-box('max-office-divider',[.16,3,2.15],[.75,1.5,-15.65],0x101925);
-box('max-office-divider-top',[.16,3,.95],[.75,1.5,-12.75],0x101925);
-const maxOfficeFloor=new THREE.Mesh(new THREE.BoxGeometry(7.0,.035,4.4),new THREE.MeshStandardMaterial({color:0x20283a,roughness:1}));
-maxOfficeFloor.position.set(4.5,.03,-14.7);scene.add(maxOfficeFloor);
-const maxDesk=box('max-desk',[3.0,.82,1.15],[5.2,.55,-15.65],0x2b3442,{metalness:.3});
-const maxScreen=box('max-screen',[1.65,.9,.1],[5.2,1.25,-16.22],0x6f8fff,{metalness:.2});
+
+// Max rear window.
+box('max-office-window-sill',[3.7,.22,.18],[ROOM_RIGHT,1.02,ROOM_BACK],0x2b3445,{metalness:.2});
+const maxWindow=new THREE.Mesh(new THREE.BoxGeometry(3.7,1.65,.045),glassMat);
+maxWindow.position.set(ROOM_RIGHT,2.0,ROOM_BACK+.09);maxWindow.castShadow=false;scene.add(maxWindow);
+for(const x of [2.275,5.975]) box('max-window-frame',[.09,1.8,.12],[x,2.0,ROOM_BACK+.12],0x7487ae,{metalness:.45});
+box('max-window-frame-top',[3.8,.09,.12],[ROOM_RIGHT,2.86,ROOM_BACK+.12],0x7487ae,{metalness:.45});
+box('max-window-frame-bottom',[3.8,.09,.12],[ROOM_RIGHT,1.14,ROOM_BACK+.12],0x7487ae,{metalness:.45});
+box('max-window-mullion',[.07,1.65,.1],[ROOM_RIGHT,2.0,ROOM_BACK+.14],0x7487ae,{metalness:.45});
+
+const maxOfficeFloor=new THREE.Mesh(new THREE.BoxGeometry(7.8,.035,4.4),new THREE.MeshStandardMaterial({color:0x20283a,roughness:1}));
+maxOfficeFloor.position.set(ROOM_RIGHT,.03,-14.7);scene.add(maxOfficeFloor);
+const maxDesk=box('max-desk',[3.0,.82,1.15],[4.8,.55,-15.65],0x2b3442,{metalness:.3});
+const maxScreen=box('max-screen',[1.65,.9,.1],[4.8,1.25,-16.22],0x6f8fff,{metalness:.2});
 maxScreen.material.emissive=new THREE.Color(0x3e5fff);maxScreen.material.emissiveIntensity=.8;
 const maxChair=new THREE.Mesh(new THREE.CylinderGeometry(.43,.5,.16,8),new THREE.MeshStandardMaterial({color:0x303b4c,roughness:.7,flatShading:true}));
-maxChair.position.set(5.2,.55,-14.55);maxChair.castShadow=true;scene.add(maxChair);
+maxChair.position.set(4.8,.55,-14.55);maxChair.castShadow=true;scene.add(maxChair);
 const maxBeacon=new THREE.Mesh(new THREE.TorusGeometry(.72,.045,8,32),new THREE.MeshBasicMaterial({color:0x7d9bff}));
 maxBeacon.rotation.x=Math.PI/2;maxBeacon.position.set(5.2,.09,-15.65);scene.add(maxBeacon);
 

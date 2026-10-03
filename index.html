@@ -495,6 +495,18 @@ for(const [min,max,windowCenter] of [[-8.25,-1.2,-4.35],[1.2,8.25,4.35]]){
   if(max>rightStart) addCollisionRect((rightStart+max)/2,ROOM_FRONT,(max-rightStart)/2,.08);
 }
 
+// Small front window openings are also collidable.
+// The visible opening stays open-looking, but the player cannot pass through it.
+for(let i=0;i<agents.length;i++){
+  const a=agents[i], layout=CUBICLE_LAYOUT[i];
+  if(!layout || a.open) continue;
+  const [x,z,angle,scale]=layout;
+  const ca=Math.cos(angle), sa=Math.sin(angle);
+  const localToWorld=(lx,lz)=>({x:x+(lx*ca-lz*sa)*scale,z:z+(lx*sa+lz*ca)*scale});
+  const p=localToWorld(0,1.07);
+  addCollisionRect(p.x,p.z,.525*scale,.045*scale,angle);
+}
+
 // Cubicle U-shaped partitions. Back + left + right panels are collidable;
 // the open front remains walkable.
 for(let i=0;i<agents.length;i++){

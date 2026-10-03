@@ -132,11 +132,11 @@ Object.entries(controlKeys).forEach(([id,k])=>{
 const stick=document.getElementById('moveStick'),knob=document.getElementById('stickKnob');let stickId=null;
 function resetStick(){joyX=0;joyZ=0;knob.style.transform='translate(0,0)'}
 stick.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();stickId=e.pointerId;stick.setPointerCapture(e.pointerId);});
-stick.addEventListener('pointermove',e=>{if(e.pointerId!==stickId)return;e.preventDefault();const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.31;let dx=e.clientX-cx,dy=e.clientY-cy,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max}knob.style.transform='translate('+dx+'px,'+dy+'px)';joyX=dx/max;joyZ=dy/max});
+stick.addEventListener('pointermove',e=>{if(e.pointerId!==stickId)return;e.preventDefault();const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.31;let dx=e.clientX-cx,dy=e.clientY-cy,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max}knob.style.transform='translate('+dx+'px,'+dy+'px)';joyX=dx/max;joyZ=-dy/max});
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>stick.addEventListener(t,e=>{if(e.pointerId===stickId){stickId=null;resetStick()}}));
 const lookZone=document.getElementById('lookZone');let lookId=null,lastLookX=0,lastLookY=0;
 lookZone.addEventListener('pointerdown',e=>{e.preventDefault();lookId=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;lookZone.setPointerCapture(e.pointerId)});
-lookZone.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;yaw-=dx*.006;pitch=THREE.MathUtils.clamp(pitch-dy*.004,-0.65,0.65)});
+lookZone.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;yaw+=dx*.006;pitch=THREE.MathUtils.clamp(pitch-dy*.004,-0.65,0.65)});
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>lookZone.addEventListener(t,e=>{if(e.pointerId===lookId)lookId=null}));
 
 // Mouse look while pointer is locked; on mobile, camera stays fixed for now.

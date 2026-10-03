@@ -108,7 +108,7 @@
       <div class="settingsActions"><button class="settingsReset" id="settingsReset">Reset defaults</button><button class="settingsSave" id="settingsDone">Done</button></div>
     </div>
   </div>
-  <div class="help">DESKTOP: WASD / ARROWS · Mouse: look · Enter Max's office or visit a cubicle</div>
+  <div class="help">DESKTOP: WASD / ARROWS · SHIFT: RUN · SPACE: JUMP · Mouse: look</div>
   <div id="crosshair" aria-hidden="true"></div>
   <div id="desktopControls"><div class="controlTitle">MOVE · WASD / ARROWS</div><div class="controlGrid">
     <button class="pad" id="d-up">W</button><button class="pad" id="d-left">A</button><button class="pad" id="d-down">S</button><button class="pad" id="d-right">D</button>
@@ -589,7 +589,7 @@ const jarvisBeacon=new THREE.Mesh(new THREE.TorusGeometry(.75,.035,10,48),new TH
 jarvisBeacon.rotation.x=Math.PI/2;jarvisBeacon.position.set(0,.08,18.2);scene.add(jarvisBeacon);
 
 const keys={};let moveX=0,moveZ=0,joyX=0,joyZ=0;let isRunning=false;let jumpRequested=false;
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(k==='shift')isRunning=true;if(k===' '||k==='spacebar'){e.preventDefault();jumpRequested=true}});
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(k==='shift')isRunning=true;if((k===' '||k==='spacebar')&&e.target?.tagName!=='INPUT'&&e.target?.tagName!=='TEXTAREA'){e.preventDefault();jumpRequested=true}});
 addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k]=false;if(k==='shift')isRunning=false});
 function updateKeys(){const keyX=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);const keyZ=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0);moveX=THREE.MathUtils.clamp(keyX+joyX,-1,1);moveZ=THREE.MathUtils.clamp(keyZ+joyZ,-1,1);if(keys.shift)isRunning=true}
 const controlKeys={'d-up':'w','d-down':'s','d-left':'a','d-right':'d'};

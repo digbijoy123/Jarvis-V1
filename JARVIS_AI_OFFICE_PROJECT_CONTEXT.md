@@ -720,3 +720,23 @@ When continuing development from this file:
 6. Do not hallucinate missing implementation details.
 
 This document is a project handoff/context file, not a claim that future architecture has already been implemented.
+
+
+## 27. Mandatory Change Verification Rule
+
+For **every future code change** in this project:
+
+1. Fetch the current file from GitHub before editing.
+2. Make the requested change.
+3. Re-fetch the edited file from GitHub **after the edit**.
+4. Verify the exact changed logic exists in the resulting file.
+5. Check for initialization/order/reference errors introduced by the change.
+6. Verify important dependencies and runtime state are defined before they are used.
+7. Check the resulting commit SHA.
+8. Check the Vercel deployment state when the change affects the deployed site.
+9. Do not tell the user a change is fixed merely because GitHub accepted the commit.
+10. If a change can be runtime-tested, actually test it before claiming it works.
+
+This rule applies to **every future change**, not only bug fixes or settings changes.
+
+The recent settings bug is an example: `applySettings()` was accidentally executed before the settings/runtime declarations were initialized, causing the JavaScript module to stop during startup. The corrected version moves the call after all settings bindings and before the animation loop.

@@ -55,14 +55,12 @@
   <div id="mobileControls">
     <div id="moveStick"><div id="stickKnob"></div><div id="moveHint">MOVE</div></div>
     <div id="lookZone"><div id="lookHint">SWIPE RIGHT SIDE · LOOK</div></div>
-  </div><div class="controlGrid">
-    <button class="pad" id="up">▲</button><button class="pad" id="left">◀</button><button class="pad" id="down">▼</button><button class="pad" id="right">▶</button>
-  </div></div>
+  </div>
   <section class="panel">
-    <h3 id="agentTitle">JARVIS</h3>
-    <p id="agentDesc">Walk to a workstation and click it. This first build is intentionally local-only; the AI backend comes next.</p>
-    <div class="log" id="log"><div class="msg"><b>JARVIS:</b> Office initialized. Awaiting task.</div></div>
-    <div class="chat"><input id="task" placeholder="Give Jarvis a task…"><button id="send">Send</button></div>
+    <h3 id="agentTitle">AI COMMAND</h3>
+    <p id="agentDesc">Select an agent cubicle to assign work. JARVIS routes the task to the selected AI.</p>
+    <div class="log" id="log"><div class="msg"><b>JARVIS:</b> System ready. Select an AI cubicle.</div></div>
+    <div class="chat"><input id="task" placeholder="Assign a task to the selected AI…"><button id="send">Send</button></div>
   </section>
 </div>
 <script type="module">
@@ -102,14 +100,49 @@ const agents=[
 const clickable=[];
 function makeAgent(a){
  const g=new THREE.Group();g.position.set(...a.pos);g.userData=a;
- const desk=box('desk',[3.4,1,1.5],[a.pos[0],.55,a.pos[2]],0x242b36);desk.parent=g;desk.position.set(0,.55,0);
- const screen=box('screen',[1.45,1,.08],[a.pos[0],1.35,a.pos[2]-.38],a.color,{metalness:.15});screen.parent=g;screen.position.set(0,1.35,-.38);
- const head=new THREE.Mesh(new THREE.SphereGeometry(.42,20,14),new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.12}));head.position.set(0,1.95,.15);head.castShadow=true;g.add(head);
- const body=box('body',[.65,.9,.45],[0,1.25,.18],0x303845);body.parent=g;body.position.set(0,1.25,.18);
- const label=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.name),transparent:true}));label.scale.set(2.6,.65,1);label.position.set(0,2.65,0);g.add(label);
+
+ // Individual cubicle: low partitions, rear wall, ceiling frame and entrance opening.
+ const cubicleW=5.4,cubicleD=4.8,wallH=2.2,wallT=.16;
+ const wallMat=new THREE.MeshStandardMaterial({color:0x151b25,roughness:.82,metalness:.05});
+ function part(name,size,pos,mat=wallMat){
+   const m=new THREE.Mesh(new THREE.BoxGeometry(...size),mat);
+   m.name=name;m.position.set(...pos);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;
+ }
+ part('cubicle-back',[cubicleW,wallH,wallT],[0,wallH/2,-cubicleD/2]);
+ part('cubicle-left',[wallT,wallH,cubicleD],[-cubicleW/2,wallH/2,0]);
+ part('cubicle-right',[wallT,wallH,cubicleD],[cubicleW/2,wallH/2,0]);
+
+ // Top frame makes the workstation read as a real office cubicle.
+ const frameMat=new THREE.MeshStandardMaterial({color:0x273141,roughness:.55,metalness:.35});
+ part('frame-back',[cubicleW+.2,.12,.12],[0,wallH+.05,-cubicleD/2],frameMat);
+ part('frame-left',[.12,.12,cubicleD+.1],[-cubicleW/2,wallH+.05,0],frameMat);
+ part('frame-right',[.12,.12,cubicleD+.1],[cubicleW/2,wallH+.05,0],frameMat);
+
+ // Desk and AI workstation.
+ part('desk',[3.6,1,1.55],[0,.55,.15],new THREE.MeshStandardMaterial({color:0x242b36,roughness:.72,metalness:.12}));
+ const screen=part('screen',[1.55,1.05,.08],[0,1.45,-.45],new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.22,roughness:.3,metalness:.2}));
+ screen.userData.agent=a;
+
+ // AI slot / status core on every desk.
+ const slotMat=new THREE.MeshStandardMaterial({color:0x101722,emissive:a.color,emissiveIntensity:.35,metalness:.45,roughness:.25});
+ const slot=part('ai-slot',[1.05,.08,.38],[0,1.08,-.25],slotMat);
+ slot.userData.agent=a;
+ const led=new THREE.Mesh(new THREE.SphereGeometry(.07,12,8),new THREE.MeshBasicMaterial({color:a.color}));
+ led.position.set(.62,1.1,-.25);g.add(led);
+
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.42,20,14),new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.12}));
+ head.position.set(0,1.95,.18);head.castShadow=true;g.add(head);
+ const body=part('body',[.65,.9,.45],[0,1.25,.2],new THREE.MeshStandardMaterial({color:0x303845,roughness:.75}));
+
+ const label=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.name),transparent:true}));
+ label.scale.set(2.6,.65,1);label.position.set(0,2.7,-.05);g.add(label);
+
+ const role=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.role.toUpperCase()),transparent:true}));
+ role.scale.set(3.5,.42,1);role.position.set(0,2.3,-.05);g.add(role);
+
  scene.add(g);clickable.push(g);
 }
-function makeText(text){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.clearRect(0,0,512,128);x.font='700 42px Arial';x.textAlign='center';x.fillStyle='#ffffff';x.fillText(text,256,72);return new THREE.CanvasTexture(c)}
+function makeText(text){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.clearRect(0,0,512,128);x.font='700 34px Arial';x.textAlign='center';x.fillStyle='#ffffff';x.fillText(text,256,72);return new THREE.CanvasTexture(c)}
 
 agents.forEach(makeAgent);
 
@@ -149,11 +182,26 @@ const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
 renderer.domElement.addEventListener('pointerdown',e=>{
  if(e.pointerType==='touch')return;
  mouse.x=e.clientX/innerWidth*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;raycaster.setFromCamera(mouse,camera);
- const hit=raycaster.intersectObjects(clickable,true)[0];if(hit){const root=hit.object.parent?.userData?.name?hit.object.parent:hit.object;const a=root.userData;if(a)selectAgent(a)}
+ const hit=raycaster.intersectObjects(clickable,true)[0];if(hit){
+ let node=hit.object,a=null;
+ while(node){if(node.userData?.name){a=node.userData;break}node=node.parent}
+ if(a)selectAgent(a)
+}
 });
-function selectAgent(a){document.getElementById('agentTitle').textContent=a.name;document.getElementById('agentDesc').textContent=a.role;addLog(a.name,'Workstation selected. Ready for delegation.')}
+let selectedAgent=null;
+function selectAgent(a){
+ selectedAgent=a;
+ document.getElementById('agentTitle').textContent=a.name;
+ document.getElementById('agentDesc').textContent=a.role+' · AI slot ready';
+ document.getElementById('task').placeholder='Assign a task to '+a.name+'…';
+ addLog(a.name,'Cubicle selected. AI slot ready for delegation.');
+}
 function addLog(who,msg){const d=document.createElement('div');d.className='msg';d.innerHTML='<b>'+who+':</b> '+msg;const l=document.getElementById('log');l.prepend(d);while(l.children.length>5)l.lastChild.remove()}
-document.getElementById('send').onclick=()=>{const input=document.getElementById('task');const t=input.value.trim();if(!t)return;addLog('YOU',t);addLog('JARVIS','Task received. Agent orchestration will be connected in the next build.');input.value=''};
+document.getElementById('send').onclick=()=>{
+ const input=document.getElementById('task'),t=input.value.trim();if(!t)return;
+ if(!selectedAgent){addLog('JARVIS','Select an AI cubicle before assigning a task.');return}
+ addLog('YOU',t);addLog(selectedAgent.name,'Task queued in AI slot. Backend orchestration will execute it in the next build.');input.value=''
+};
 document.getElementById('task').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('send').click()});
 
 const clock=new THREE.Clock();

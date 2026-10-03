@@ -7,12 +7,26 @@
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07090d;color:#eef2f7;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
 #app{position:fixed;inset:0}canvas{display:block}.hud{position:fixed;inset:0;pointer-events:none}
+#crosshair{position:absolute;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none;z-index:8;filter:drop-shadow(0 1px 3px rgba(0,0,0,.75))}
+#crosshair:before,#crosshair:after{content:"";position:absolute;background:rgba(255,248,232,.92);border-radius:2px}
+#crosshair:before{left:8px;top:1px;width:2px;height:16px}
+#crosshair:after{left:1px;top:8px;width:16px;height:2px}
+.actionBtn{border:1px solid rgba(255,255,255,.16);background:rgba(15,19,27,.88);color:#fff;border-radius:14px;min-width:72px;height:46px;font-size:11px;font-weight:800;letter-spacing:.08em;touch-action:none;user-select:none;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3);backdrop-filter:blur(10px)}
+.actionBtn.active,.actionBtn:active{transform:scale(.94);background:rgba(103,75,45,.92);border-color:rgba(255,210,150,.4)}
+#desktopActions{display:flex;gap:7px;margin-top:7px}
+#desktopActions .actionBtn{height:32px;min-width:58px;font-size:9px}
+#mobileActions{display:none;position:absolute;right:20px;bottom:185px;z-index:21;pointer-events:none;flex-direction:column;gap:10px}
+#mobileActions .actionBtn{pointer-events:auto;width:74px}
+.touch-device #mobileActions{display:flex}
+.touch-device #crosshair{width:16px;height:16px}
+.touch-device #crosshair:before{left:7px;top:1px;height:14px}
+.touch-device #crosshair:after{left:1px;top:7px;width:14px}
 .topbar{position:absolute;top:14px;left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{pointer-events:auto;background:rgba(10,14,21,.82);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}.brand b{letter-spacing:.12em;font-size:13px}.brand small{display:block;color:#8f9aaa;margin-top:3px;font-size:10px}
 .status{pointer-events:auto;display:flex;align-items:center;gap:8px;background:rgba(10,14,21,.82);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:9px 12px;font-size:11px;color:#aeb7c4}.dot{width:8px;height:8px;border-radius:50%;background:#42e28b;box-shadow:0 0 12px #42e28b}
 .panel{position:absolute;right:14px;bottom:14px;width:min(330px,calc(100vw - 28px));background:rgba(9,13,20,.9);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:14px;pointer-events:auto;box-shadow:0 18px 50px rgba(0,0,0,.35)}.panel h3{margin:0 0 5px;font-size:14px}.panel p{margin:0 0 12px;color:#8f9aaa;font-size:11px;line-height:1.45}.chat{display:flex;gap:7px}.chat input{min-width:0;flex:1;border:1px solid rgba(255,255,255,.1);background:#111722;color:#fff;border-radius:10px;padding:10px;font-size:12px;outline:none}.chat button{border:0;border-radius:10px;padding:0 13px;background:#e9eef7;color:#111722;font-weight:700}.log{max-height:120px;overflow:auto;margin-bottom:10px}.msg{font-size:11px;padding:7px 8px;border-radius:9px;background:#111722;margin-bottom:6px;color:#cbd3de}.msg b{color:#fff}
 .help{position:absolute;left:14px;bottom:14px;background:rgba(9,13,20,.78);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:9px 11px;color:#8f9aaa;font-size:10px}
-#desktopControls{position:absolute;left:14px;bottom:14px;width:154px;height:116px;padding:10px;background:rgba(9,13,20,.78);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:14px;pointer-events:auto}.controlTitle{font-size:9px;color:#8f9aaa;margin:0 0 7px 2px;letter-spacing:.08em}.controlGrid{position:relative;width:132px;height:78px}.pad{position:absolute;width:40px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(12,17,25,.9);color:#fff;font-size:15px;font-weight:700;touch-action:none;user-select:none;cursor:pointer}.pad:active,.pad.active{transform:scale(.94);background:rgba(70,100,160,.75)}#d-up{left:46px;top:0}#d-left{left:0;top:40px}#d-down{left:46px;top:40px}#d-right{left:92px;top:40px}
+#desktopControls{position:absolute;left:14px;bottom:14px;width:154px;height:154px;padding:10px;background:rgba(9,13,20,.78);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:14px;pointer-events:auto}.controlTitle{font-size:9px;color:#8f9aaa;margin:0 0 7px 2px;letter-spacing:.08em}.controlGrid{position:relative;width:132px;height:78px}.pad{position:absolute;width:40px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(12,17,25,.9);color:#fff;font-size:15px;font-weight:700;touch-action:none;user-select:none;cursor:pointer}.pad:active,.pad.active{transform:scale(.94);background:rgba(70,100,160,.75)}#d-up{left:46px;top:0}#d-left{left:0;top:40px}#d-down{left:46px;top:40px}#d-right{left:92px;top:40px}
 #settingsBtn{position:absolute;top:14px;right:145px;width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(10,14,21,.82);color:#dfe7f2;font-size:18px;cursor:pointer;pointer-events:auto;backdrop-filter:blur(14px);z-index:20}
 #settingsOverlay{display:none;position:fixed;inset:0;background:rgba(2,5,9,.62);backdrop-filter:blur(10px);z-index:100;pointer-events:auto}
 #settingsOverlay.open{display:flex;align-items:center;justify-content:center}
@@ -95,12 +109,17 @@
     </div>
   </div>
   <div class="help">DESKTOP: WASD / ARROWS · Mouse: look · Enter Max's office or visit a cubicle</div>
+  <div id="crosshair" aria-hidden="true"></div>
   <div id="desktopControls"><div class="controlTitle">MOVE · WASD / ARROWS</div><div class="controlGrid">
     <button class="pad" id="d-up">W</button><button class="pad" id="d-left">A</button><button class="pad" id="d-down">S</button><button class="pad" id="d-right">D</button>
-  </div></div>
+  </div><div id="desktopActions"><button class="actionBtn" id="d-run">RUN · SHIFT</button><button class="actionBtn" id="d-jump">JUMP · SPACE</button></div></div>
   <div id="mobileControls">
     <div id="moveStick"><div id="stickKnob"></div><div id="moveHint">MOVE</div></div>
     <div id="lookZone"><div id="lookHint">SWIPE RIGHT SIDE · LOOK</div></div>
+    <div id="mobileActions">
+      <button class="actionBtn" id="m-jump">JUMP</button>
+      <button class="actionBtn" id="m-run">RUN</button>
+    </div>
   </div>
   <section class="panel">
     <h3 id="agentTitle">AI COMMAND</h3>
@@ -569,9 +588,10 @@ function resolveCollision(p){
 const jarvisBeacon=new THREE.Mesh(new THREE.TorusGeometry(.75,.035,10,48),new THREE.MeshBasicMaterial({color:0x7d9bff}));
 jarvisBeacon.rotation.x=Math.PI/2;jarvisBeacon.position.set(0,.08,18.2);scene.add(jarvisBeacon);
 
-const keys={};let moveX=0,moveZ=0,joyX=0,joyZ=0;
-addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
-function updateKeys(){const keyX=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);const keyZ=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0);moveX=THREE.MathUtils.clamp(keyX+joyX,-1,1);moveZ=THREE.MathUtils.clamp(keyZ+joyZ,-1,1)}
+const keys={};let moveX=0,moveZ=0,joyX=0,joyZ=0;let isRunning=false;let jumpRequested=false;
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(k==='shift')isRunning=true;if(k===' '||k==='spacebar'){e.preventDefault();jumpRequested=true}});
+addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k]=false;if(k==='shift')isRunning=false});
+function updateKeys(){const keyX=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);const keyZ=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0);moveX=THREE.MathUtils.clamp(keyX+joyX,-1,1);moveZ=THREE.MathUtils.clamp(keyZ+joyZ,-1,1);if(keys.shift)isRunning=true}
 const controlKeys={'d-up':'w','d-down':'s','d-left':'a','d-right':'d'};
 Object.entries(controlKeys).forEach(([id,k])=>{
  const b=document.getElementById(id); if(!b)return;
@@ -584,6 +604,11 @@ function resetStick(){joyX=0;joyZ=0;knob.style.transform='translate(0,0)'}
 stick.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();stickId=e.pointerId;stick.setPointerCapture(e.pointerId);});
 stick.addEventListener('pointermove',e=>{if(e.pointerId!==stickId)return;e.preventDefault();const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.31;let dx=e.clientX-cx,dy=e.clientY-cy,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max}knob.style.transform='translate('+dx+'px,'+dy+'px)';joyX=dx/max;joyZ=-dy/max});
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>stick.addEventListener(t,e=>{if(e.pointerId===stickId){stickId=null;resetStick()}}));
+function bindActionButton(id,down,up=()=>{}){const b=document.getElementById(id);if(!b)return;const press=e=>{e.preventDefault();e.stopPropagation();down();b.classList.add('active');if(b.setPointerCapture)b.setPointerCapture(e.pointerId)};const release=e=>{e.preventDefault();e.stopPropagation();up();b.classList.remove('active')};b.addEventListener('pointerdown',press);b.addEventListener('pointerup',release);b.addEventListener('pointercancel',release);b.addEventListener('pointerleave',release);b.addEventListener('lostpointercapture',release)}
+bindActionButton('d-run',()=>{isRunning=true},()=>{isRunning=false});
+bindActionButton('m-run',()=>{isRunning=true},()=>{isRunning=false});
+bindActionButton('d-jump',()=>{jumpRequested=true});
+bindActionButton('m-jump',()=>{jumpRequested=true});
 const lookZone=document.getElementById('lookZone');let lookId=null,lastLookX=0,lastLookY=0;
 lookZone.addEventListener('pointerdown',e=>{e.preventDefault();lookId=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;lookZone.setPointerCapture(e.pointerId)});
 lookZone.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;yaw+=dx*.006*gameSettings.touchSensitivity;pitch=THREE.MathUtils.clamp(pitch-(dy*.008*gameSettings.touchSensitivity*(gameSettings.invertY?-1:1)),-1.35,1.35)});
@@ -684,11 +709,13 @@ applySettings();
 const clock=new THREE.Clock();
 const PLAYER_EYE_HEIGHT=1.72;
 const GRAVITY=-18;
+const JUMP_VELOCITY=7.2;
 let playerY=PLAYER_EYE_HEIGHT;
 let verticalVelocity=0;
 
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updateKeys();
- const speed=gameSettings.moveSpeed*dt;const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
+ const runMultiplier=isRunning?1.85:1;
+ const speed=gameSettings.moveSpeed*runMultiplier*dt;const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
  const nextPosition=camera.position.clone();
  nextPosition.addScaledVector(right,moveX*speed);
  nextPosition.addScaledVector(forward,moveZ*speed);
@@ -697,7 +724,10 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  resolveCollision(nextPosition);
  camera.position.x=nextPosition.x;camera.position.z=nextPosition.z;
 
- // Player gravity: the camera represents the player's eye position and falls onto the floor.
+ // Player gravity + jump. The camera represents the player's eye position.
+ const onGround=playerY<=PLAYER_EYE_HEIGHT+.001;
+ if(jumpRequested && onGround){verticalVelocity=JUMP_VELOCITY;jumpRequested=false}
+ else if(onGround){jumpRequested=false}
  verticalVelocity+=GRAVITY*dt;
  playerY+=verticalVelocity*dt;
  if(playerY<PLAYER_EYE_HEIGHT){playerY=PLAYER_EYE_HEIGHT;verticalVelocity=0}

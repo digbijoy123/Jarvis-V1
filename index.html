@@ -329,8 +329,27 @@ const agents=[
  {name:'OPEN SLOT',role:'Future specialist slot',pos:[5,0,-5.4],color:0x64748b,open:true}
 ];
 
+// Controlled-random cubicle layout: every reload keeps the same arrangement,
+// but the workstations are staggered, rotated and slightly offset so the office
+// feels organic instead of like a rigid spreadsheet grid.
+const CUBICLE_LAYOUT=[
+  [-5.35, 9.15,-0.035,1.00], [ 0.15, 9.45, 0.028,.97], [ 5.35, 9.05,-0.018,1.02],
+  [-5.05, 4.35, 0.022,.98],  [ 0.35, 4.05,-0.040,1.01], [ 5.15, 4.45, 0.032,.96],
+  [-5.40,-0.55,-0.028,1.02], [ 0.05,-0.80, 0.040,.98], [ 5.30,-0.45,-0.020,1.01],
+  [-5.10,-5.35, 0.035,.97], [ 0.30,-5.65,-0.025,1.03], [ 5.05,-5.25, 0.018,.99]
+];
+const CUBICLE_BY_NAME=new Map(agents.map((a,i)=>[a.name,CUBICLE_LAYOUT[i]]));
 function makeAgent(a){
- const g=new THREE.Group();g.position.set(...a.pos);g.userData=a;
+ const g=new THREE.Group();
+ const layout=CUBICLE_BY_NAME.get(a.name);
+ if(layout){
+   g.position.set(layout[0],0,layout[1]);
+   g.rotation.y=layout[2];
+   g.scale.setScalar(layout[3]);
+ }else{
+   g.position.set(...a.pos);
+ }
+ g.userData=a;
  if(a.open){
   const empty=new THREE.Mesh(new THREE.BoxGeometry(2.2,.06,1.05),lowPolyMat(0x273247,{roughness:.8}));
   empty.position.set(0,.52,.18);empty.castShadow=true;g.add(empty);
@@ -339,7 +358,7 @@ function makeAgent(a){
  }else{
   // Reference-style U-shaped workstation: two side privacy panels + a full back panel,
   // leaving the front open for the chair and player access.
-  const panelFrame=lowPolyMat(0xb8c2cf,{roughness:.58,metalness:.22});
+  const panelFrame=lowPolyMat(0x8795a8,{roughness:.62,metalness:.24});
   const panelUpper=lowPolyMat(0x6d7f92,{roughness:.86});
   const panelLower=lowPolyMat(0x253448,{roughness:.72,metalness:.08});
   const panelHeight=1.72, panelY=1.02;
@@ -364,12 +383,14 @@ function makeAgent(a){
 
   // Transparent glass front wall: preserves the cubicle enclosure while keeping
   // the seated AI agent, desk and monitor clearly visible from the aisle.
-  const cubicleGlass=new THREE.MeshStandardMaterial({
-    color:0x9fc9e8,
+  const cubicleGlass=new THREE.MeshPhysicalMaterial({
+    color:0x5f8fba,
     transparent:true,
-    opacity:.20,
-    roughness:.12,
-    metalness:.08,
+    opacity:.10,
+    roughness:.08,
+    metalness:.02,
+    transmission:.22,
+    thickness:.02,
     depthWrite:false,
     side:THREE.DoubleSide
   });
@@ -383,11 +404,11 @@ function makeAgent(a){
 
   // Slim frame around the transparent front panel.
   for(const x of [-1.34,1.34]){
-    const frame=new THREE.Mesh(new THREE.BoxGeometry(.075,1.55,.08),panelFrame);
+    const frame=new THREE.Mesh(new THREE.BoxGeometry(.055,1.55,.06),panelFrame);
     frame.position.set(x,1.02,1.07);frame.castShadow=true;g.add(frame);
   }
   for(const y of [.27,1.79]){
-    const frame=new THREE.Mesh(new THREE.BoxGeometry(2.72,.075,.08),panelFrame);
+    const frame=new THREE.Mesh(new THREE.BoxGeometry(2.72,.055,.06),panelFrame);
     frame.position.set(0,y,1.07);frame.castShadow=true;g.add(frame);
   }
 

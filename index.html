@@ -876,24 +876,24 @@ function startOrchestration(task){
 }
 function walkAgentToMax(agentGroup,task){
  if(!agentGroup || agentGroup.userData.walking)return;
- const start=agentGroup.position.clone();
- const sideX=start.x<0?-1.7:1.7;
- agentGroup.userData.walking=true;
- agentGroup.userData.walkTime=0;
- agentGroup.userData.walkWaypoints=[
-   new THREE.Vector3(sideX,0,start.z),
-   new THREE.Vector3(0,0,start.z),
-   new THREE.Vector3(0,0,-14.0),
-   new THREE.Vector3(2.2,0,-14.7),
-   new THREE.Vector3(5.2,0,-15.65)
+ const walker=agentGroup.userData.agentModel;
+ if(!walker)return;
+ const worldPosition=new THREE.Vector3();
+ walker.getWorldPosition(worldPosition);
+ const worldRotation=new THREE.Euler().setFromQuaternion(walker.getWorldQuaternion(new THREE.Quaternion()));
+ const start=worldPosition.clone(),sideX=start.x<0?-1.7:1.7;
+ walker.userData.walking=true;walker.userData.agentName=agentGroup.userData.name;
+ walker.userData.originalParent=agentGroup;walker.userData.homePosition=start.clone();
+ walker.userData.homeLocalPosition=walker.position.clone();walker.userData.homeLocalRotation=walker.rotation.clone();
+ walker.userData.walkTime=0;
+ walker.userData.walkWaypoints=[
+  new THREE.Vector3(sideX,1.0,start.z),new THREE.Vector3(0,1.0,start.z),
+  new THREE.Vector3(0,1.0,-14.0),new THREE.Vector3(2.2,1.0,-14.7),new THREE.Vector3(5.2,1.0,-15.65)
  ];
- agentGroup.userData.walkIndex=0;
- agentGroup.userData.walkTask=task;
- agentGroup.userData.walkPhase='TO_MAX';
+ walker.userData.walkIndex=0;walker.userData.walkTask=task;walker.userData.walkPhase='TO_MAX';
+ agentGroup.remove(walker);scene.add(walker);walker.position.copy(start);walker.rotation.copy(worldRotation);
  workforceStatus[agentGroup.userData.name].status='WORKING';
- workforceStatus[agentGroup.userData.name].task=task;
- workforceStatus[agentGroup.userData.name].progress=0;
- drawWorkforceDisplay();
+ workforceStatus[agentGroup.userData.name].task=task;workforceStatus[agentGroup.userData.name].progress=0;drawWorkforceDisplay();
 }
 document.getElementById('send').onclick=()=>{
  const input=document.getElementById('task'),t=input.value.trim();if(!t)return;
@@ -978,13 +978,11 @@ function updateWalkingAgents(dt){
   if(u.walkPhase==='AT_MAX'){
     u.walkBob=0;
     if(u.walkTime>1.4){
-      u.walkPhase='RETURN';
-      u.walkTime=0;
+      u.walkPhase='RETURN';u.walkTime=0;
       u.walkWaypoints=[
-        new THREE.Vector3(2.2,0,-14.7),
-        new THREE.Vector3(0,0,-14.0),
-        new THREE.Vector3(0,0,u.homePosition.z),
-        new THREE.Vector3(u.homePosition.x<0?-1.7:1.7,0,u.homePosition.z),
+        new THREE.Vector3(2.2,1.0,-14.7),new THREE.Vector3(0,1.0,-14.0),
+        new THREE.Vector3(0,1.0,u.homePosition.z),
+        new THREE.Vector3(u.homePosition.x<0?-1.7:1.7,1.0,u.homePosition.z),
         u.homePosition.clone()
       ];
       u.walkIndex=0;
@@ -992,30 +990,22 @@ function updateWalkingAgents(dt){
   }else{
     const target=u.walkWaypoints[u.walkIndex];
     if(!target){u.walkPhase='AT_MAX';u.walkTime=0;return}
-    const dx=target.x-o.position.x,dz=target.z-o.position.z;
-    const dist=Math.hypot(dx,dz);
+    const dx=target.x-o.position.x,dz=target.z-o.position.z,dist=Math.hypot(dx,dz);
     if(dist<.08){
-      o.position.x=target.x;o.position.z=target.z;u.walkIndex++;
+      o.position.x=target.x;o.position.z=target.z;o.position.y=target.y;u.walkIndex++;
       if(u.walkIndex>=u.walkWaypoints.length){
         if(u.walkPhase==='TO_MAX'){
           u.walkPhase='AT_MAX';u.walkTime=0;
-          if(orchestrationState.active){
-            orchestrationState.currentStep=1;
-            updateOrchestrationDisplay();
-            addLog('MAX',u.name+' received the assignment and is now working.');
-          }
+          if(orchestrationState.active){orchestrationState.currentStep=1;updateOrchestrationDisplay();addLog('MAX',u.agentName+' received the assignment and is now working.');}
         }else{
           u.walking=false;
-          o.position.copy(u.homePosition);
-          o.rotation.y=u.homeRotation;
+          const parent=u.originalParent;
+          if(parent){parent.add(o);o.position.copy(u.homeLocalPosition);o.rotation.copy(u.homeLocalRotation);}
           if(orchestrationState.active){
-            if(orchestrationState.currentStep<orchestrationState.plan.length-1){
-              orchestrationState.currentStep++;
-              updateOrchestrationDisplay();
-            }
-            finishOrchestration(o);
+            if(orchestrationState.currentStep<orchestrationState.plan.length-1){orchestrationState.currentStep++;updateOrchestrationDisplay();}
+            finishOrchestration(parent);
           }else{
-            const state=workforceStatus[u.name];
+            const state=workforceStatus[u.agentName];
             if(state){state.status='IDLE';state.task='No active task';state.progress=1;}
             drawWorkforceDisplay();
           }
@@ -1023,22 +1013,16 @@ function updateWalkingAgents(dt){
       }
     }else{
       const step=Math.min(dist,2.5*dt);
-      o.position.x+=dx/dist*step;
-      o.position.z+=dz/dist*step;
-      o.rotation.y=Math.atan2(dx,-dz);
+      o.position.x+=dx/dist*step;o.position.z+=dz/dist*step;o.rotation.y=Math.atan2(dx,-dz);
       u.walkBob=(u.walkBob||0)+dt*10;
       const swing=Math.sin(u.walkBob)*.48;
       const leftArm=o.getObjectByName('leftArm'),rightArm=o.getObjectByName('rightArm');
       const leftThigh=o.getObjectByName('leftThigh'),rightThigh=o.getObjectByName('rightThigh');
       const leftShin=o.getObjectByName('leftShin'),rightShin=o.getObjectByName('rightShin');
-      if(leftArm)leftArm.rotation.x=-.15+swing*.35;
-      if(rightArm)rightArm.rotation.x=-.15-swing*.35;
-      if(leftThigh)leftThigh.rotation.x=swing;
-      if(rightThigh)rightThigh.rotation.x=-swing;
-      if(leftShin)leftShin.rotation.x=-swing*.65;
-      if(rightShin)rightShin.rotation.x=swing*.65;
-      const state=workforceStatus[u.name];
-      if(state)state.progress=Math.min(.99,(u.walkIndex+1)/u.walkWaypoints.length);
+      if(leftArm)leftArm.rotation.x=-.15+swing*.35;if(rightArm)rightArm.rotation.x=-.15-swing*.35;
+      if(leftThigh)leftThigh.rotation.x=swing;if(rightThigh)rightThigh.rotation.x=-swing;
+      if(leftShin)leftShin.rotation.x=-swing*.65;if(rightShin)rightShin.rotation.x=swing*.65;
+      const state=workforceStatus[u.agentName];if(state)state.progress=Math.min(.99,(u.walkIndex+1)/u.walkWaypoints.length);
     }
   }
  });

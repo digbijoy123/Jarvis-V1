@@ -119,9 +119,9 @@ const orb=new THREE.Mesh(new THREE.SphereGeometry(.7,24,16),new THREE.MeshStanda
 orb.position.set(0,1.25,0);orb.castShadow=true;scene.add(orb);
 const ring=new THREE.Mesh(new THREE.TorusGeometry(1,.045,10,64),new THREE.MeshBasicMaterial({color:0x7d9bff}));ring.rotation.x=Math.PI/2;ring.position.y=1.25;scene.add(ring);
 
-const keys={};let moveX=0,moveZ=0;
+const keys={};let moveX=0,moveZ=0,joyX=0,joyZ=0;
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
-function updateKeys(){moveX=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);moveZ=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)}
+function updateKeys(){const keyX=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);const keyZ=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);moveX=THREE.MathUtils.clamp(keyX+joyX,-1,1);moveZ=THREE.MathUtils.clamp(keyZ+joyZ,-1,1)}
 const controlKeys={'d-up':'w','d-down':'s','d-left':'a','d-right':'d'};
 Object.entries(controlKeys).forEach(([id,k])=>{
  const b=document.getElementById(id); if(!b)return;
@@ -130,9 +130,9 @@ Object.entries(controlKeys).forEach(([id,k])=>{
  b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off);
 });
 const stick=document.getElementById('moveStick'),knob=document.getElementById('stickKnob');let stickId=null;
-function resetStick(){moveX=0;moveZ=0;knob.style.transform='translate(0,0)'}
-stick.addEventListener('pointerdown',e=>{e.preventDefault();stickId=e.pointerId;stick.setPointerCapture(e.pointerId)});
-stick.addEventListener('pointermove',e=>{if(e.pointerId!==stickId)return;const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.31;let dx=e.clientX-cx,dy=e.clientY-cy,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max}knob.style.transform='translate('+dx+'px,'+dy+'px)';moveX=dx/max;moveZ=dy/max});
+function resetStick(){joyX=0;joyZ=0;knob.style.transform='translate(0,0)'}
+stick.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();stickId=e.pointerId;stick.setPointerCapture(e.pointerId);});
+stick.addEventListener('pointermove',e=>{if(e.pointerId!==stickId)return;e.preventDefault();const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.31;let dx=e.clientX-cx,dy=e.clientY-cy,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max}knob.style.transform='translate('+dx+'px,'+dy+'px)';joyX=dx/max;joyZ=dy/max});
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>stick.addEventListener(t,e=>{if(e.pointerId===stickId){stickId=null;resetStick()}}));
 const lookZone=document.getElementById('lookZone');let lookId=null,lastLookX=0,lastLookY=0;
 lookZone.addEventListener('pointerdown',e=>{e.preventDefault();lookId=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;lookZone.setPointerCapture(e.pointerId)});

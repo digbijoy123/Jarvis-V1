@@ -66,14 +66,13 @@
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
   }
 }
 </script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
-import { SkeletonUtils } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/utils/SkeletonUtils.js';
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x07090d);
@@ -85,9 +84,18 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWid
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.domElement.style.touchAction='none';
 document.getElementById('app').appendChild(renderer.domElement);
-const gltfLoader=new GLTFLoader();
 const AGENT_MODEL='https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@main/2.0/CesiumMan/glTF-Binary/CesiumMan.glb';
-const agentModelPromise=gltfLoader.loadAsync(AGENT_MODEL).catch(err=>{console.error('Agent model failed to load',err);return null;});
+// Load the optional GLTF addon dynamically so a loader/import failure can never stop the office renderer.
+const agentModelPromise=(async()=>{
+ try{
+   const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
+   const loader=new GLTFLoader();
+   return await loader.loadAsync(AGENT_MODEL);
+ }catch(err){
+   console.error('Agent model loader failed; continuing with renderer:',err);
+   return null;
+ }
+})();
 
 scene.add(new THREE.HemisphereLight(0xb9d4ff,0x18202b,2.0));
 const key=new THREE.DirectionalLight(0xffffff,2.6);key.position.set(4,10,5);key.castShadow=true;scene.add(key);
@@ -148,7 +156,7 @@ maxBeacon.rotation.x=Math.PI/2;maxBeacon.position.set(0,1.05,-16.3);scene.add(ma
 const maxGroup=new THREE.Group();maxGroup.userData={name:'MAX',role:'Boss agent · receives user commands and orchestrates the office'};maxGroup.position.set(0,0,-16.3);scene.add(maxGroup);
 agentModelPromise.then(asset=>{
  if(!asset)return;
- const model=SkeletonUtils.clone(asset.scene);const b=new THREE.Box3().setFromObject(model);const sz=b.getSize(new THREE.Vector3());const scale=2.35/Math.max(sz.y,.001);
+ const model=asset.scene.clone(true);const b=new THREE.Box3().setFromObject(model);const sz=b.getSize(new THREE.Vector3());const scale=2.35/Math.max(sz.y,.001);
  model.scale.setScalar(scale);model.position.set(0,.95,0);model.rotation.y=Math.PI;model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
  maxGroup.add(model);
  if(asset.animations?.length){const mixer=new THREE.AnimationMixer(model);const clip=asset.animations.find(x=>/idle|walk/i.test(x.name))||asset.animations[0];if(clip)mixer.clipAction(clip).play();maxGroup.userData.mixer=mixer;}
@@ -198,7 +206,7 @@ async function makeAgent(a){
  // Real 3D agent model replaces the primitive head/body placeholder.
  const modelAsset=await agentModelPromise;
  if(modelAsset){
-   const model=SkeletonUtils.clone(modelAsset.scene);
+   const model=modelAsset.scene.clone(true);
    const box3=new THREE.Box3().setFromObject(model);
    const size=box3.getSize(new THREE.Vector3());
    const scale=2.0/Math.max(size.y,.001);

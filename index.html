@@ -239,48 +239,48 @@ for(const x of [-CORRIDOR_HALF,CORRIDOR_HALF]){
   box(side+'-door-frame-top',[.08,.09,2.2],[x,2.95,DOOR_CENTER_Z],0x69778c,{metalness:.35});
 }
 
-// Front wall segments stop at the central corridor entrance.
-box('front-wall-left',[7.05,3,.16],[-4.725,1.5,ROOM_FRONT],0x162230);
-box('front-wall-right',[7.05,3,.16],[4.725,1.5,ROOM_FRONT],0x162230);
+// Front wall with TWO REAL OPENINGS.
+// The wall is physically split around each rectangular window opening.
+// No transparent window mesh is used: the opening is literally empty space.
+const FRONT_WALL_Y=1.5;
+const WINDOW_BOTTOM=1.25;
+const WINDOW_TOP=2.75;
+const WINDOW_HALF_W=1.125;
+const WALL_BOTTOM_H=WINDOW_BOTTOM;
+const WALL_TOP_H=3-WINDOW_TOP;
 
-// Two lightweight rectangular windows on the front architectural wall.
-// These are simple opaque/emissive panels — no transparent cubicle materials.
-const frontWindowMat=new THREE.MeshPhysicalMaterial({
-  color:0x6fa9d6,
-  transparent:true,
-  opacity:.28,
-  transmission:.38,
-  thickness:.015,
-  roughness:.08,
-  metalness:.02,
-  depthWrite:false,
-  side:THREE.DoubleSide
-});
-function addFrontWindow(x){
-  const w=new THREE.Mesh(new THREE.BoxGeometry(2.25,1.35,.045),frontWindowMat);
-  w.position.set(x,2.0,ROOM_FRONT+.105);
-  w.castShadow=false;
-  w.receiveShadow=false;
-  scene.add(w);
+function addCutWall(sideCenter,sideMin,sideMax,windowCenter){
+  const leftEnd=windowCenter-WINDOW_HALF_W;
+  const rightStart=windowCenter+WINDOW_HALF_W;
 
+  // Lower wall beneath the opening.
+  box('front-wall-'+sideMin+'-lower',[sideMax-sideMin,WALL_BOTTOM_H,.16],[
+    (sideMin+sideMax)/2,WALL_BOTTOM_H/2,ROOM_FRONT
+  ],0x162230);
+
+  // Upper wall above the opening.
+  box('front-wall-'+sideMin+'-upper',[sideMax-sideMin,WALL_TOP_H,.16],[
+    (sideMin+sideMax)/2,WINDOW_TOP+WALL_TOP_H/2,ROOM_FRONT
+  ],0x162230);
+
+  // Solid side pieces beside the opening.
+  box('front-wall-window-left',[leftEnd-sideMin,3-WALL_BOTTOM_H-WALL_TOP_H,.16],[
+    (sideMin+leftEnd)/2,(WINDOW_BOTTOM+WINDOW_TOP)/2,ROOM_FRONT
+  ],0x162230);
+  box('front-wall-window-right',[sideMax-rightStart,3-WALL_BOTTOM_H-WALL_TOP_H,.16],[
+    (rightStart+sideMax)/2,(WINDOW_BOTTOM+WINDOW_TOP)/2,ROOM_FRONT
+  ],0x162230);
+
+  // Minimal structural frame around the open aperture.
   const frameMat=new THREE.MeshStandardMaterial({color:0x718197,roughness:.55,metalness:.3});
-  for(const [sx,sy,sw,sh] of [
-    [x-1.17,2.0,.07,1.48],
-    [x+1.17,2.0,.07,1.48],
-    [x,2.73,2.41,.07],
-    [x,1.27,2.41,.07]
-  ]){
-    const frame=new THREE.Mesh(new THREE.BoxGeometry(sw,sh,.075),frameMat);
-    frame.position.set(sx,sy,ROOM_FRONT+.14);
-    frame.castShadow=true;
-    scene.add(frame);
-  }
-  const mullion=new THREE.Mesh(new THREE.BoxGeometry(.055,1.35,.08),frameMat);
-  mullion.position.set(x,2.0,ROOM_FRONT+.15);
-  scene.add(mullion);
+  box('window-frame-left',[.07,1.55,.08],[windowCenter-WINDOW_HALF_W,2.0,ROOM_FRONT+.06],0x718197,{metalness:.3});
+  box('window-frame-right',[.07,1.55,.08],[windowCenter+WINDOW_HALF_W,2.0,ROOM_FRONT+.06],0x718197,{metalness:.3});
+  box('window-frame-top',[2.32,.07,.08],[windowCenter,WINDOW_TOP,ROOM_FRONT+.06],0x718197,{metalness:.3});
+  box('window-frame-bottom',[2.32,.07,.08],[windowCenter,WINDOW_BOTTOM,ROOM_FRONT+.06],0x718197,{metalness:.3});
 }
-addFrontWindow(-4.35);
-addFrontWindow(4.35);
+
+addCutWall(-4.725,-8.25,-1.2,-4.35);
+addCutWall(4.725,1.2,8.25,4.35);
 
 // Conference floor + furniture.
 const conferenceFloor=new THREE.Mesh(new THREE.BoxGeometry(7.0,.035,4.4),new THREE.MeshStandardMaterial({color:0x202d40,roughness:.92,flatShading:true}));

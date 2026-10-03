@@ -372,10 +372,10 @@ const agents=[
 // but the workstations are staggered, rotated and slightly offset so the office
 // feels organic instead of like a rigid spreadsheet grid.
 const CUBICLE_LAYOUT=[
-  [-5.35, 9.15,-0.035,1.00], [ 0.15, 9.45, 0.028,.97], [ 5.35, 9.05,-0.018,1.02],
-  [-5.05, 4.35, 0.022,.98],  [ 0.35, 4.05,-0.040,1.01], [ 5.15, 4.45, 0.032,.96],
-  [-5.40,-0.55,-0.028,1.02], [ 0.05,-0.80, 0.040,.98], [ 5.30,-0.45,-0.020,1.01],
-  [-5.10,-5.35, 0.035,.97], [ 0.30,-5.65,-0.025,1.03], [ 5.05,-5.25, 0.018,.99]
+  [-5.75, 9.55,-0.075,1.00], [ 0.10, 9.85, 0.045,.96], [ 5.70, 9.25, 0.085,1.01],
+  [-4.85, 4.35, 0.060,.98],  [ 0.75, 4.05,-0.095,1.03], [ 5.15, 4.65,-0.055,.97],
+  [-5.55,-0.80, 0.095,1.02], [ 0.00,-0.45,-0.055,.97], [ 5.65,-1.00, 0.075,1.01],
+  [-4.85,-5.70,-0.065,.98], [ 0.80,-5.35, 0.085,1.02], [ 5.20,-5.85,-0.045,.96]
 ];
 const CUBICLE_BY_NAME=new Map(agents.map((a,i)=>[a.name,CUBICLE_LAYOUT[i]]));
 function makeAgent(a){
@@ -447,6 +447,67 @@ function makeAgent(a){
 }
 function makeText(text){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.clearRect(0,0,512,128);x.font='700 34px Arial';x.textAlign='center';x.fillStyle='#ffffff';x.fillText(text,256,72);return new THREE.CanvasTexture(c)}
 agents.forEach(makeAgent);
+
+// === PLAYER COLLISION ===
+// Lightweight 2D collision against room walls and cubicle partitions.
+// Cubicle fronts remain open so the player can enter them.
+const PLAYER_RADIUS=.30;
+const collisionRects=[];
+function addCollisionRect(cx,cz,hx,hz,angle=0){collisionRects.push({cx,cz,hx,hz,angle})}
+
+// Room outer walls.
+addCollisionRect(-8.25,-14.7,.08,2.4);
+addCollisionRect( 8.25,-14.7,.08,2.4);
+addCollisionRect(-4.725,-17,3.525,.08);
+addCollisionRect( 4.725,-17,3.525,.08);
+
+// Corridor-facing room walls, split around the two opposing doorways.
+addCollisionRect(-1.2,-13.35,.08,1.05);
+addCollisionRect(-1.2,-16.30,.08,.70);
+addCollisionRect( 1.2,-13.35,.08,1.05);
+addCollisionRect( 1.2,-16.30,.08,.70);
+
+// Front walls: preserve the central corridor entrance and the two rectangular
+// window openings by only colliding with solid wall sections.
+for(const [min,max,windowCenter] of [[-8.25,-1.2,-4.35],[1.2,8.25,4.35]]){
+  const leftEnd=windowCenter-1.125, rightStart=windowCenter+1.125;
+  if(leftEnd>min) addCollisionRect((min+leftEnd)/2,ROOM_FRONT,(leftEnd-min)/2,.08);
+  if(max>rightStart) addCollisionRect((rightStart+max)/2,ROOM_FRONT,(max-rightStart)/2,.08);
+}
+
+// Cubicle U-shaped partitions. Back + left + right panels are collidable;
+// the open front remains walkable.
+for(let i=0;i<agents.length;i++){
+  const a=agents[i], layout=CUBICLE_LAYOUT[i];
+  if(!layout || a.open) continue;
+  const [x,z,angle,scale]=layout;
+  const ca=Math.cos(angle), sa=Math.sin(angle);
+  const localToWorld=(lx,lz)=>({x:x+(lx*ca-lz*sa)*scale,z:z+(lx*sa+lz*ca)*scale});
+  let p=localToWorld(0,-.76);
+  addCollisionRect(p.x,p.z,1.36*scale,.055*scale,angle);
+  p=localToWorld(-1.34,.12);
+  addCollisionRect(p.x,p.z,.055*scale,.94*scale,angle);
+  p=localToWorld(1.34,.12);
+  addCollisionRect(p.x,p.z,.055*scale,.94*scale,angle);
+}
+
+function resolveCollision(p){
+  for(const r of collisionRects){
+    const dx=p.x-r.cx,dz=p.z-r.cz,ca=Math.cos(r.angle),sa=Math.sin(r.angle);
+    const lx=dx*ca+dz*sa,lz=-dx*sa+dz*ca;
+    const ex=r.hx+PLAYER_RADIUS,ez=r.hz+PLAYER_RADIUS;
+    if(Math.abs(lx)<ex && Math.abs(lz)<ez){
+      const pushX=ex-Math.abs(lx),pushZ=ez-Math.abs(lz);
+      if(pushX<pushZ){
+        const sign=lx<0?-1:1, nx=lx+sign*pushX;
+        p.x=nx*ca-lz*sa+r.cx;p.z=nx*sa+lz*ca+r.cz;
+      }else{
+        const sign=lz<0?-1:1, nz=lz+sign*pushZ;
+        p.x=lx*ca-nz*sa+r.cx;p.z=lx*sa+nz*ca+r.cz;
+      }
+    }
+  }
+}
 
 // Entrance marker: JARVIS is the orchestration/runtime layer behind Max.
 const jarvisBeacon=new THREE.Mesh(new THREE.TorusGeometry(.75,.035,10,48),new THREE.MeshBasicMaterial({color:0x7d9bff}));
@@ -568,15 +629,19 @@ let verticalVelocity=0;
 
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updateKeys();
  const speed=gameSettings.moveSpeed*dt;const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
- camera.position.addScaledVector(right,moveX*speed);camera.position.addScaledVector(forward,moveZ*speed);
+ const nextPosition=camera.position.clone();
+ nextPosition.addScaledVector(right,moveX*speed);
+ nextPosition.addScaledVector(forward,moveZ*speed);
+ nextPosition.x=THREE.MathUtils.clamp(nextPosition.x,-8.65,8.65);
+ nextPosition.z=THREE.MathUtils.clamp(nextPosition.z,-17.8,19.5);
+ resolveCollision(nextPosition);
+ camera.position.x=nextPosition.x;camera.position.z=nextPosition.z;
 
  // Player gravity: the camera represents the player's eye position and falls onto the floor.
  verticalVelocity+=GRAVITY*dt;
  playerY+=verticalVelocity*dt;
  if(playerY<PLAYER_EYE_HEIGHT){playerY=PLAYER_EYE_HEIGHT;verticalVelocity=0}
 
- camera.position.x=THREE.MathUtils.clamp(camera.position.x,-8.2,8.2);
- camera.position.z=THREE.MathUtils.clamp(camera.position.z,-17.8,19.5);
  camera.position.y=playerY;camera.fov=gameSettings.fov;camera.updateProjectionMatrix();
  const look=new THREE.Vector3(camera.position.x+forward.x*10,playerY+pitch*3,camera.position.z+forward.z*10);camera.lookAt(look);
  scene.traverse(o=>{if(o.userData?.mixer)o.userData.mixer.update(dt);if(o.userData?.agentModel && o.userData.name==='MAX'){const m=o.userData.agentModel;m.position.y=Math.sin(performance.now()*.002)*.018}});

@@ -876,7 +876,66 @@ const JUMP_VELOCITY=7.2;
 let playerY=PLAYER_EYE_HEIGHT;
 let verticalVelocity=0;
 
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updateKeys();
+function updateWalkingAgents(dt){
+ scene.traverse(o=>{
+  if(!o.userData?.walking)return;
+  const u=o.userData;
+  u.walkTime+=dt;
+  if(u.walkPhase==='AT_MAX'){
+    u.walkBob=0;
+    if(u.walkTime>1.4){
+      u.walkPhase='RETURN';
+      u.walkTime=0;
+      u.walkWaypoints=[
+        new THREE.Vector3(2.2,0,-14.7),
+        new THREE.Vector3(0,0,-14.0),
+        new THREE.Vector3(0,0,u.homePosition.z),
+        new THREE.Vector3(u.homePosition.x<0?-1.7:1.7,0,u.homePosition.z),
+        u.homePosition.clone()
+      ];
+      u.walkIndex=0;
+    }
+  }else{
+    const target=u.walkWaypoints[u.walkIndex];
+    if(!target){u.walkPhase='AT_MAX';u.walkTime=0;return}
+    const dx=target.x-o.position.x,dz=target.z-o.position.z;
+    const dist=Math.hypot(dx,dz);
+    if(dist<.08){
+      o.position.x=target.x;o.position.z=target.z;u.walkIndex++;
+      if(u.walkIndex>=u.walkWaypoints.length){
+        if(u.walkPhase==='TO_MAX'){u.walkPhase='AT_MAX';u.walkTime=0;}
+        else{
+          u.walking=false;
+          o.position.copy(u.homePosition);
+          o.rotation.y=u.homeRotation;
+          const state=workforceStatus[u.name];
+          if(state){state.status='IDLE';state.task='No active task';state.progress=1;}
+          drawWorkforceDisplay();
+        }
+      }
+    }else{
+      const step=Math.min(dist,2.5*dt);
+      o.position.x+=dx/dist*step;
+      o.position.z+=dz/dist*step;
+      o.rotation.y=Math.atan2(dx,-dz);
+      u.walkBob=(u.walkBob||0)+dt*10;
+      const swing=Math.sin(u.walkBob)*.48;
+      const leftArm=o.getObjectByName('leftArm'),rightArm=o.getObjectByName('rightArm');
+      const leftThigh=o.getObjectByName('leftThigh'),rightThigh=o.getObjectByName('rightThigh');
+      const leftShin=o.getObjectByName('leftShin'),rightShin=o.getObjectByName('rightShin');
+      if(leftArm)leftArm.rotation.x=-.15+swing*.35;
+      if(rightArm)rightArm.rotation.x=-.15-swing*.35;
+      if(leftThigh)leftThigh.rotation.x=swing;
+      if(rightThigh)rightThigh.rotation.x=-swing;
+      if(leftShin)leftShin.rotation.x=-swing*.65;
+      if(rightShin)rightShin.rotation.x=swing*.65;
+      const state=workforceStatus[u.name];
+      if(state)state.progress=Math.min(.99,(u.walkIndex+1)/u.walkWaypoints.length);
+    }
+  }
+ });
+}
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updateKeys();updateWalkingAgents(dt);
  const runMultiplier=isRunning?1.85:1;
  const speed=gameSettings.moveSpeed*runMultiplier*dt;const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
  const nextPosition=camera.position.clone();

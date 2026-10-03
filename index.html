@@ -302,11 +302,24 @@ document.getElementById('send').onclick=()=>{
 document.getElementById('task').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('send').click()});
 
 const clock=new THREE.Clock();
+const PLAYER_EYE_HEIGHT=1.72;
+const GRAVITY=-18;
+let playerY=PLAYER_EYE_HEIGHT;
+let verticalVelocity=0;
+
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updateKeys();
  const speed=5*dt;const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
  camera.position.addScaledVector(right,moveX*speed);camera.position.addScaledVector(forward,moveZ*speed);
- camera.position.x=THREE.MathUtils.clamp(camera.position.x,-4.7,4.7);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-17.8,19.5);
- camera.position.y=4.2;const look=new THREE.Vector3(camera.position.x+forward.x*10,1.6+pitch*3,camera.position.z+forward.z*10);camera.lookAt(look);
+
+ // Player gravity: the camera represents the player's eye position and falls onto the floor.
+ verticalVelocity+=GRAVITY*dt;
+ playerY+=verticalVelocity*dt;
+ if(playerY<PLAYER_EYE_HEIGHT){playerY=PLAYER_EYE_HEIGHT;verticalVelocity=0}
+
+ camera.position.x=THREE.MathUtils.clamp(camera.position.x,-4.7,4.7);
+ camera.position.z=THREE.MathUtils.clamp(camera.position.z,-17.8,19.5);
+ camera.position.y=playerY;
+ const look=new THREE.Vector3(camera.position.x+forward.x*10,playerY+pitch*3,camera.position.z+forward.z*10);camera.lookAt(look);
  scene.traverse(o=>{if(o.userData?.mixer)o.userData.mixer.update(dt)});renderer.render(scene,camera)}
 animate();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});

@@ -245,16 +245,20 @@ box('front-wall-right',[7.05,3,.16],[4.725,1.5,ROOM_FRONT],0x162230);
 
 // Two lightweight rectangular windows on the front architectural wall.
 // These are simple opaque/emissive panels — no transparent cubicle materials.
-const frontWindowMat=new THREE.MeshStandardMaterial({
-  color:0x31557d,
-  emissive:0x173250,
-  emissiveIntensity:.42,
-  roughness:.34,
-  metalness:.08
+const frontWindowMat=new THREE.MeshPhysicalMaterial({
+  color:0x6fa9d6,
+  transparent:true,
+  opacity:.28,
+  transmission:.38,
+  thickness:.015,
+  roughness:.08,
+  metalness:.02,
+  depthWrite:false,
+  side:THREE.DoubleSide
 });
 function addFrontWindow(x){
   const w=new THREE.Mesh(new THREE.BoxGeometry(2.25,1.35,.045),frontWindowMat);
-  w.position.set(x,2.0,ROOM_FRONT-.095);
+  w.position.set(x,2.0,ROOM_FRONT+.105);
   w.castShadow=false;
   w.receiveShadow=false;
   scene.add(w);
@@ -267,12 +271,12 @@ function addFrontWindow(x){
     [x,1.27,2.41,.07]
   ]){
     const frame=new THREE.Mesh(new THREE.BoxGeometry(sw,sh,.075),frameMat);
-    frame.position.set(sx,sy,ROOM_FRONT-.13);
+    frame.position.set(sx,sy,ROOM_FRONT+.14);
     frame.castShadow=true;
     scene.add(frame);
   }
   const mullion=new THREE.Mesh(new THREE.BoxGeometry(.055,1.35,.08),frameMat);
-  mullion.position.set(x,2.0,ROOM_FRONT-.14);
+  mullion.position.set(x,2.0,ROOM_FRONT+.15);
   scene.add(mullion);
 }
 addFrontWindow(-4.35);

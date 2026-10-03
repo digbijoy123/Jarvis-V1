@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>JARVIS AI Office — V1</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07090d;color:#eef2f7;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+#app{position:fixed;inset:0}canvas{display:block}
+.hud{position:fixed;inset:0;pointer-events:none}
+.topbar{position:absolute;top:14px;left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{pointer-events:auto;background:rgba(10,14,21,.82);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.brand b{letter-spacing:.12em;font-size:13px}.brand small{display:block;color:#8f9aaa;margin-top:3px;font-size:10px}
+.status{pointer-events:auto;display:flex;align-items:center;gap:8px;background:rgba(10,14,21,.82);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:9px 12px;font-size:11px;color:#aeb7c4}
+.dot{width:8px;height:8px;border-radius:50%;background:#42e28b;box-shadow:0 0 12px #42e28b}
+.panel{position:absolute;right:14px;bottom:14px;width:min(330px,calc(100vw - 28px));background:rgba(9,13,20,.88);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:14px;pointer-events:auto;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.panel h3{margin:0 0 5px;font-size:14px}.panel p{margin:0 0 12px;color:#8f9aaa;font-size:11px;line-height:1.45}
+.chat{display:flex;gap:7px}.chat input{min-width:0;flex:1;border:1px solid rgba(255,255,255,.1);background:#111722;color:#fff;border-radius:10px;padding:10px;font-size:12px;outline:none}.chat button{border:0;border-radius:10px;padding:0 13px;background:#e9eef7;color:#111722;font-weight:700}
+.log{max-height:120px;overflow:auto;margin-bottom:10px}.msg{font-size:11px;padding:7px 8px;border-radius:9px;background:#111722;margin-bottom:6px;color:#cbd3de}.msg b{color:#fff}
+.help{position:absolute;left:14px;bottom:14px;background:rgba(9,13,20,.78);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:9px 11px;color:#8f9aaa;font-size:10px}
+#touch{display:none;position:absolute;left:14px;bottom:14px;width:170px;height:170px;pointer-events:auto}
+.pad{position:absolute;width:54px;height:54px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(12,17,25,.78);color:#fff;font-size:22px;touch-action:none;user-select:none}
+#up{left:58px;top:0}#left{left:0;top:58px}#down{left:58px;top:58px}#right{left:116px;top:58px}
+@media(max-width:700px){.help{display:none}.panel{left:14px;right:14px;width:auto;bottom:14px}.panel .log{display:none}.topbar{top:10px}.brand{padding:8px 11px}#touch{display:block;bottom:205px}.panel{bottom:12px}.panel p{margin-bottom:8px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="hud">
+  <div class="topbar">
+    <div class="brand"><b>JARVIS // AI OFFICE</b><small>OPERATIONS FLOOR · V1</small></div>
+    <div class="status"><span class="dot"></span> SYSTEM ONLINE</div>
+  </div>
+  <div class="help">DESKTOP: WASD / ARROWS · Mouse: look · Click a workstation</div>
+  <div id="touch">
+    <button class="pad" id="up">▲</button><button class="pad" id="left">◀</button>
+    <button class="pad" id="down">▼</button><button class="pad" id="right">▶</button>
+  </div>
+  <section class="panel">
+    <h3 id="agentTitle">JARVIS</h3>
+    <p id="agentDesc">Walk to a workstation and click it. This first build is intentionally local-only; the AI backend comes next.</p>
+    <div class="log" id="log"><div class="msg"><b>JARVIS:</b> Office initialized. Awaiting task.</div></div>
+    <div class="chat"><input id="task" placeholder="Give Jarvis a task…"><button id="send">Send</button></div>
+  </section>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js';
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x07090d);
+scene.fog=new THREE.Fog(0x07090d,18,42);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,100);
+camera.position.set(0,4.2,10);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.getElementById('app').appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xb9d4ff,0x18202b,2.0));
+const key=new THREE.DirectionalLight(0xffffff,2.6);key.position.set(4,10,5);key.castShadow=true;scene.add(key);
+const fill=new THREE.PointLight(0x6d8cff,18,22);fill.position.set(0,5,0);scene.add(fill);
+
+function box(name,size,pos,color,opts={}){const m=new THREE.MeshStandardMaterial({color,roughness:.72,metalness:opts.metalness||0});const o=new THREE.Mesh(new THREE.BoxGeometry(...size),m);o.name=name;o.position.set(...pos);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
+box('floor',[28,.3,24],[0,-.15,0],0x171c25);
+box('back',[28,7,.3],[0,3.5,-11.8],0x10151d);
+box('leftwall',[.3,7,24],[-13.8,3.5,0],0x10151d);
+box('rightwall',[.3,7,24],[13.8,3.5,0],0x10151d);
+for(let x=-10;x<=10;x+=5) box('ceiling-light',[3.2,.08,.7],[x,6.8,-1],0xdce8ff,{metalness:.1});
+const grid=new THREE.GridHelper(27,27,0x303a49,0x1c2330);grid.position.y=.02;scene.add(grid);
+
+const agents=[
+ {name:'DEVELOPER',role:'Builds software & fixes bugs',pos:[-7,0,-5],color:0x4d8cff},
+ {name:'RESEARCHER',role:'Finds information & evidence',pos:[0,0,-5],color:0xa86cff},
+ {name:'BUSINESS',role:'Plans clients, sales & operations',pos:[7,0,-5],color:0xffa84d},
+ {name:'TEACHER',role:'Explains concepts & creates lessons',pos:[-7,0,4],color:0x42d9a0},
+ {name:'DESIGNER',role:'UI, graphics & product experience',pos:[0,0,4],color:0xff6fae},
+ {name:'QA',role:'Tests builds and catches regressions',pos:[7,0,4],color:0xe6d35b}
+];
+const clickable=[];
+function makeAgent(a){
+ const g=new THREE.Group();g.position.set(...a.pos);g.userData=a;
+ const desk=box('desk',[3.4,1,1.5],[a.pos[0],.55,a.pos[2]],0x242b36);desk.parent=g;desk.position.set(0,.55,0);
+ const screen=box('screen',[1.45,1,.08],[a.pos[0],1.35,a.pos[2]-.38],a.color,{metalness:.15});screen.parent=g;screen.position.set(0,1.35,-.38);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.42,20,14),new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.12}));head.position.set(0,1.95,.15);head.castShadow=true;g.add(head);
+ const body=box('body',[.65,.9,.45],[0,1.25,.18],0x303845);body.parent=g;body.position.set(0,1.25,.18);
+ const label=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.name),transparent:true}));label.scale.set(2.6,.65,1);label.position.set(0,2.65,0);g.add(label);
+ scene.add(g);clickable.push(g);
+}
+function makeText(text){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.clearRect(0,0,512,128);x.font='700 42px Arial';x.textAlign='center';x.fillStyle='#ffffff';x.fillText(text,256,72);return new THREE.CanvasTexture(c)}
+
+agents.forEach(makeAgent);
+
+// central JARVIS command console
+const consoleBase=box('jarvis-console',[4,.55,2.2],[0,.3,0],0x202832,{metalness:.25});
+const orb=new THREE.Mesh(new THREE.SphereGeometry(.7,24,16),new THREE.MeshStandardMaterial({color:0x9bb7ff,emissive:0x496cff,emissiveIntensity:1.5,metalness:.25,roughness:.2}));
+orb.position.set(0,1.25,0);orb.castShadow=true;scene.add(orb);
+const ring=new THREE.Mesh(new THREE.TorusGeometry(1,.045,10,64),new THREE.MeshBasicMaterial({color:0x7d9bff}));ring.rotation.x=Math.PI/2;ring.position.y=1.25;scene.add(ring);
+
+const keys={};let moveX=0,moveZ=0;
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
+function updateKeys(){moveX=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);moveZ=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)}
+document.querySelectorAll('.pad').forEach(b=>{
+ const k={up:'w',down:'s',left:'a',right:'d'}[b.id];
+ const on=e=>{e.preventDefault();keys[k]=true};const off=e=>{e.preventDefault();keys[k]=false};
+ b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off);
+});
+
+// Mouse look while pointer is locked; on mobile, camera stays fixed for now.
+let yaw=0;
+renderer.domElement.addEventListener('click',()=>{if(innerWidth>700) renderer.domElement.requestPointerLock?.()});
+addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement) yaw-=e.movementX*.0025});
+const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
+renderer.domElement.addEventListener('pointerdown',e=>{
+ if(e.pointerType==='touch')return;
+ mouse.x=e.clientX/innerWidth*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;raycaster.setFromCamera(mouse,camera);
+ const hit=raycaster.intersectObjects(clickable,true)[0];if(hit){const root=hit.object.parent?.userData?.name?hit.object.parent:hit.object;const a=root.userData;if(a)selectAgent(a)}
+});
+function selectAgent(a){document.getElementById('agentTitle').textContent=a.name;document.getElementById('agentDesc').textContent=a.role;addLog(a.name,'Workstation selected. Ready for delegation.')}
+function addLog(who,msg){const d=document.createElement('div');d.className='msg';d.innerHTML='<b>'+who+':</b> '+msg;const l=document.getElementById('log');l.prepend(d);while(l.children.length>5)l.lastChild.remove()}
+document.getElementById('send').onclick=()=>{const input=document.getElementById('task');const t=input.value.trim();if(!t)return;addLog('YOU',t);addLog('JARVIS','Task received. Agent orchestration will be connected in the next build.');input.value=''};
+document.getElementById('task').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('send').click()});
+
+const clock=new THREE.Clock();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updateKeys();
+ const speed=5*dt;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+ camera.position.addScaledVector(right,moveX*speed);camera.position.addScaledVector(forward,moveZ*speed);
+ camera.position.x=THREE.MathUtils.clamp(camera.position.x,-12,12);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-10,10);
+ camera.position.y=4.2;const look=new THREE.Vector3(camera.position.x,1.6,camera.position.z);camera.lookAt(look);
+ orb.rotation.y+=dt;ring.rotation.z+=dt*.4;renderer.render(scene,camera)}
+animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body>
+</html>

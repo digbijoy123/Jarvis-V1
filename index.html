@@ -124,7 +124,7 @@ const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x0b1220);
 scene.fog=new THREE.Fog(0x0b1220,22,46);
 const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,100);
-camera.position.set(0,4.2,16);
+camera.position.set(0,1.72,-14.7);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -453,7 +453,23 @@ function makeAgent(a){
   addPartition('cubicle-left',[.09,panelHeight,1.88],[-1.34,panelY,.12]);
   addPartition('cubicle-right',[.09,panelHeight,1.88],[1.34,panelY,.12]);
 
-  // The front (+Z) of the cubicle stays open; no wall is added here.
+  // FRONT SIDE — modeled from the user's sketch:
+  // solid lower front panel + two tall side uprights, leaving the upper center open.
+  const frontZ=1.07;
+  const frontW=2.72;
+  const lowerH=.78;
+  const frontMat=lowPolyMat(0xb8c2cf,{roughness:.58,metalness:.22});
+  const frontFrame=lowPolyMat(0x8795a8,{roughness:.58,metalness:.24});
+
+  const frontLower=new THREE.Mesh(new THREE.BoxGeometry(frontW,lowerH,.09),frontMat);
+  frontLower.position.set(0,lowerH/2,frontZ);
+  frontLower.castShadow=true;frontLower.receiveShadow=true;g.add(frontLower);
+
+  for(const x of [-frontW/2+.045,frontW/2-.045]){
+    const post=new THREE.Mesh(new THREE.BoxGeometry(.09,panelHeight,.09),frontFrame);
+    post.position.set(x,panelY,frontZ);
+    post.castShadow=true;post.receiveShadow=true;g.add(post);
+  }
 
   // Clean work surface spanning between the privacy panels.
   const desk=new THREE.Mesh(new THREE.BoxGeometry(2.42,.12,1.04),lowPolyMat(0xe5e9ee,{roughness:.55,metalness:.12}));
@@ -510,20 +526,6 @@ for(const [min,max,windowCenter] of [[-8.25,-1.2,-4.35],[1.2,8.25,4.35]]){
   if(max>rightStart) addCollisionRect((rightStart+max)/2,ROOM_FRONT,(max-rightStart)/2,.08);
 }
 
-// Back cubicle wall collision, leaving the rectangular window opening open.
-for(let i=0;i<agents.length;i++){
-  const a=agents[i], layout=CUBICLE_LAYOUT[i];
-  if(!layout || a.open) continue;
-  const [x,z,angle,scale]=layout;
-  const localToWorld=(lx,lz)=>({x:x+(lx*Math.cos(angle)-lz*Math.sin(angle))*scale,z:z+(lx*Math.sin(angle)+lz*Math.cos(angle))*scale});
-  const backZ=-.76, windowW=1.05, wallThickness=.045, backW=2.72;
-  const sideHalf=(backW-windowW)/4;
-  for(const lx of [-(backW+windowW)/4,(backW+windowW)/4]){
-    const p=localToWorld(lx,backZ);
-    addCollisionRect(p.x,p.z,sideHalf*scale,wallThickness*scale,angle);
-  }
-}
-
 // Cubicle U-shaped partitions. Back + left + right panels are collidable;
 // the front wall is now collidable separately so its window can remain open.
 for(let i=0;i<agents.length;i++){
@@ -538,6 +540,10 @@ for(let i=0;i<agents.length;i++){
   addCollisionRect(p.x,p.z,.055*scale,.94*scale,angle);
   p=localToWorld(1.34,.12);
   addCollisionRect(p.x,p.z,.055*scale,.94*scale,angle);
+
+  // Solid lower front panel; the upper center remains open.
+  p=localToWorld(0,1.07);
+  addCollisionRect(p.x,p.z,1.36*scale,.055*scale,angle);
 }
 
 function resolveCollision(p){

@@ -740,3 +740,19 @@ For **every future code change** in this project:
 This rule applies to **every future change**, not only bug fixes or settings changes.
 
 The recent settings bug is an example: `applySettings()` was accidentally executed before the settings/runtime declarations were initialized, causing the JavaScript module to stop during startup. The corrected version moves the call after all settings bindings and before the animation loop.
+
+
+## 28. Visual/3D Model Architecture Update
+
+The office now uses **self-contained procedural low-poly agent models** instead of remote GLB/GLTF character assets. This intentionally removes the previous external model-loading failure point and keeps the office lightweight for mobile.
+
+Visual direction:
+- Colorful low-poly robot/AI workers
+- Flat-shaded geometry
+- Unique specialist color per agent
+- Brighter modern office lighting
+- Colored workstation screens and cubicle frames
+- Low-poly desks/chairs and executive Max model
+- No dependency on external character GLB files
+
+The current production build must not reintroduce the old CesiumMan/GLTF character dependency unless a future change has been tested end-to-end.

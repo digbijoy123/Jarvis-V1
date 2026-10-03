@@ -45,7 +45,6 @@
 </div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js';
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x07090d);
@@ -122,10 +121,10 @@ document.getElementById('task').addEventListener('keydown',e=>{if(e.key==='Enter
 
 const clock=new THREE.Clock();
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updateKeys();
- const speed=5*dt;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+ const speed=5*dt;const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
  camera.position.addScaledVector(right,moveX*speed);camera.position.addScaledVector(forward,moveZ*speed);
  camera.position.x=THREE.MathUtils.clamp(camera.position.x,-12,12);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-10,10);
- camera.position.y=4.2;const look=new THREE.Vector3(camera.position.x,1.6,camera.position.z);camera.lookAt(look);
+ camera.position.y=4.2;const look=new THREE.Vector3(camera.position.x+forward.x*10,1.6,camera.position.z+forward.z*10);camera.lookAt(look);
  orb.rotation.y+=dt;ring.rotation.z+=dt*.4;renderer.render(scene,camera)}
 animate();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});

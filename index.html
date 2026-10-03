@@ -45,10 +45,10 @@
 <div id="app"></div>
 <div class="hud">
   <div class="topbar">
-    <div class="brand"><b>JARVIS // AI OFFICE</b><small>OPERATIONS FLOOR · V1</small></div>
+    <div class="brand"><b>MAX // AI OFFICE</b><small>COMMAND CENTER · AI WORKFORCE</small></div>
     <div class="status"><span class="dot"></span> SYSTEM ONLINE</div>
   </div>
-  <div class="help">DESKTOP: WASD / ARROWS · Mouse: look · Click a workstation</div>
+  <div class="help">DESKTOP: WASD / ARROWS · Mouse: look · Enter Max's office or visit a cubicle</div>
   <div id="desktopControls"><div class="controlTitle">MOVE · WASD / ARROWS</div><div class="controlGrid">
     <button class="pad" id="d-up">W</button><button class="pad" id="d-left">A</button><button class="pad" id="d-down">S</button><button class="pad" id="d-right">D</button>
   </div></div>
@@ -58,9 +58,9 @@
   </div>
   <section class="panel">
     <h3 id="agentTitle">AI COMMAND</h3>
-    <p id="agentDesc">Select an agent cubicle to assign work. JARVIS routes the task to the selected AI.</p>
-    <div class="log" id="log"><div class="msg"><b>JARVIS:</b> System ready. Select an AI cubicle.</div></div>
-    <div class="chat"><input id="task" placeholder="Assign a task to the selected AI…"><button id="send">Send</button></div>
+    <p id="agentDesc">Talk to Max to give the office a task, or visit a specialist cubicle.</p>
+    <div class="log" id="log"><div class="msg"><b>JARVIS:</b> Max is online. Command center ready.</div></div>
+    <div class="chat"><input id="task" placeholder="Tell Max what you want done…"><button id="send">Send</button></div>
   </section>
 </div>
 <script type="module">
@@ -70,7 +70,7 @@ const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x07090d);
 scene.fog=new THREE.Fog(0x07090d,18,42);
 const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,100);
-camera.position.set(0,4.2,10);
+camera.position.set(0,4.2,16);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -82,27 +82,66 @@ const key=new THREE.DirectionalLight(0xffffff,2.6);key.position.set(4,10,5);key.
 const fill=new THREE.PointLight(0x6d8cff,18,22);fill.position.set(0,5,0);scene.add(fill);
 
 function box(name,size,pos,color,opts={}){const m=new THREE.MeshStandardMaterial({color,roughness:.72,metalness:opts.metalness||0});const o=new THREE.Mesh(new THREE.BoxGeometry(...size),m);o.name=name;o.position.set(...pos);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
-box('floor',[28,.3,24],[0,-.15,0],0x171c25);
-box('back',[28,7,.3],[0,3.5,-11.8],0x10151d);
-box('leftwall',[.3,7,24],[-13.8,3.5,0],0x10151d);
-box('rightwall',[.3,7,24],[13.8,3.5,0],0x10151d);
-for(let x=-10;x<=10;x+=5) box('ceiling-light',[3.2,.08,.7],[x,6.8,-1],0xdce8ff,{metalness:.1});
-const grid=new THREE.GridHelper(27,27,0x303a49,0x1c2330);grid.position.y=.02;scene.add(grid);
+
+const wallMat=new THREE.MeshStandardMaterial({color:0x10151d,roughness:.82});
+const floorMat=new THREE.MeshStandardMaterial({color:0x171c25,roughness:.9});
+box('hall-floor',[11,.3,42],[0,-.15,3],0x171c25);
+box('hall-left-wall',[.3,6,42],[-5.5,3,3],0x10151d);
+box('hall-right-wall',[.3,6,42],[5.5,3,3],0x10151d);
+box('hall-ceiling',[11,.25,42],[0,6.3,3],0x0c1118);
+
+// Back wall separating the hallway from Max's office.
+box('max-back-wall',[11,6,.3],[0,3,-19],0x10151d);
+
+// Max's office: enclosed room at the end of the hallway with a wide entrance.
+box('max-office-left',[.3,6,7],[-5.5,3,-15.5],0x10151d);
+box('max-office-right',[.3,6,7],[5.5,3,-15.5],0x10151d);
+box('max-office-ceiling',[11,.25,7],[0,6.3,-15.5],0x0c1118);
+
+// Floor path and ceiling lights.
+const grid=new THREE.GridHelper(10.5,21,0x303a49,0x1c2330);grid.position.y=.02;grid.position.z=3;scene.add(grid);
+for(let z=18;z>=-16;z-=4){
+ const light=box('ceiling-light',[3.2,.08,.5],[0,6.15,z],0xdce8ff,{metalness:.1});
+ light.material.emissive=new THREE.Color(0x9fbfff);light.material.emissiveIntensity=.35;
+}
+
+// Max office desk and command area.
+const maxDesk=box('max-desk',[5.2,1.0,2.0],[0,.55,-15.7],0x202832,{metalness:.22});
+const maxScreen=box('max-screen',[2.4,1.25,.1],[0,1.55,-16.55],0x6f8fff,{metalness:.2});
+maxScreen.material.emissive=new THREE.Color(0x3e5fff);maxScreen.material.emissiveIntensity=.55;
+const maxChair=new THREE.Mesh(new THREE.CylinderGeometry(.55,.65,.25,20),new THREE.MeshStandardMaterial({color:0x303845,roughness:.7}));
+maxChair.position.set(0,.85,-14.45);maxChair.castShadow=true;scene.add(maxChair);
+const maxHead=new THREE.Mesh(new THREE.SphereGeometry(.55,24,16),new THREE.MeshStandardMaterial({color:0x9bb7ff,emissive:0x496cff,emissiveIntensity:.25}));
+maxHead.position.set(0,2.15,-15.7);maxHead.castShadow=true;scene.add(maxHead);
+const maxBody=box('max-body',[.85,1.1,.55],[0,1.35,-15.55],0x303845);
+const maxLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('MAX · BOSS AGENT'),transparent:true}));
+maxLabel.scale.set(3.5,.7,1);maxLabel.position.set(0,3.0,-15.7);scene.add(maxLabel);
+const maxSign=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('COMMAND OFFICE'),transparent:true}));
+maxSign.scale.set(3,.5,1);maxSign.position.set(0,2.55,-15.7);scene.add(maxSign);
+const maxGroup=new THREE.Group();maxGroup.userData={name:'MAX',role:'Boss agent · receives user commands and orchestrates the office'};maxGroup.add(maxHead,maxBody,maxLabel,maxSign); // logical interaction marker
+scene.add(maxGroup);
+const maxBeacon=new THREE.Mesh(new THREE.TorusGeometry(1.1,.05,12,64),new THREE.MeshBasicMaterial({color:0x7d9bff}));
+maxBeacon.rotation.x=Math.PI/2;maxBeacon.position.set(0,1.05,-15.7);scene.add(maxBeacon);
 
 const agents=[
- {name:'DEVELOPER',role:'Builds software & fixes bugs',pos:[-7,0,-5],color:0x4d8cff},
- {name:'RESEARCHER',role:'Finds information & evidence',pos:[0,0,-5],color:0xa86cff},
- {name:'BUSINESS',role:'Plans clients, sales & operations',pos:[7,0,-5],color:0xffa84d},
- {name:'TEACHER',role:'Explains concepts & creates lessons',pos:[-7,0,4],color:0x42d9a0},
- {name:'DESIGNER',role:'UI, graphics & product experience',pos:[0,0,4],color:0xff6fae},
- {name:'QA',role:'Tests builds and catches regressions',pos:[7,0,4],color:0xe6d35b}
+ {name:'CODER',role:'Full-stack software engineering',pos:[-2.8,0,11],color:0x4d8cff},
+ {name:'RESEARCHER',role:'Web research and evidence',pos:[2.8,0,11],color:0xa86cff},
+ {name:'DESIGNER',role:'UI UX and product design',pos:[-2.8,0,6],color:0xff6fae},
+ {name:'GAME ENGINEER',role:'Games simulations and 3D',pos:[2.8,0,6],color:0x6fd6ff},
+ {name:'TEACHER',role:'Teaching tutoring and explanations',pos:[-2.8,0,1],color:0x42d9a0},
+ {name:'ENGINEER',role:'Technical engineering and systems',pos:[2.8,0,1],color:0xe6d35b},
+ {name:'BUSINESS',role:'Business sales and operations',pos:[-2.8,0,-4],color:0xffa84d},
+ {name:'WRITER',role:'Writing documents and communication',pos:[2.8,0,-4],color:0xd9a3ff},
+ {name:'DATA ANALYST',role:'Data analysis and automation',pos:[-2.8,0,-9],color:0x7de0c0},
+ {name:'QA',role:'Testing debugging and verification',pos:[2.8,0,-9],color:0xf0e07a},
+ {name:'DEVOPS',role:'GitHub deployment and infrastructure',pos:[0,0,-13],color:0x8aa6ff}
 ];
-const clickable=[];
+const clickable=[maxGroup];
 function makeAgent(a){
  const g=new THREE.Group();g.position.set(...a.pos);g.userData=a;
 
  // Individual cubicle: low partitions, rear wall, ceiling frame and entrance opening.
- const cubicleW=5.4,cubicleD=4.8,wallH=2.2,wallT=.16;
+ const cubicleW=2.9,cubicleD=3.7,wallH=2.15,wallT=.12;
  const wallMat=new THREE.MeshStandardMaterial({color:0x151b25,roughness:.82,metalness:.05});
  function part(name,size,pos,mat=wallMat){
    const m=new THREE.Mesh(new THREE.BoxGeometry(...size),mat);
@@ -120,25 +159,25 @@ function makeAgent(a){
 
  // Desk and AI workstation.
  part('desk',[3.6,1,1.55],[0,.55,.15],new THREE.MeshStandardMaterial({color:0x242b36,roughness:.72,metalness:.12}));
- const screen=part('screen',[1.55,1.05,.08],[0,1.45,-.45],new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.22,roughness:.3,metalness:.2}));
+ const screen=part('screen',[1.35,.9,.08],[0,1.35,.55],new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.22,roughness:.3,metalness:.2}));
  screen.userData.agent=a;
 
  // AI slot / status core on every desk.
  const slotMat=new THREE.MeshStandardMaterial({color:0x101722,emissive:a.color,emissiveIntensity:.35,metalness:.45,roughness:.25});
- const slot=part('ai-slot',[1.05,.08,.38],[0,1.08,-.25],slotMat);
+ const slot=part('ai-slot',[.9,.08,.32],[0,1.05,.45],slotMat);
  slot.userData.agent=a;
  const led=new THREE.Mesh(new THREE.SphereGeometry(.07,12,8),new THREE.MeshBasicMaterial({color:a.color}));
- led.position.set(.62,1.1,-.25);g.add(led);
+ led.position.set(.52,1.07,.45);g.add(led);
 
  const head=new THREE.Mesh(new THREE.SphereGeometry(.42,20,14),new THREE.MeshStandardMaterial({color:a.color,emissive:a.color,emissiveIntensity:.12}));
- head.position.set(0,1.95,.18);head.castShadow=true;g.add(head);
+ head.position.set(0,1.85,.25);head.castShadow=true;g.add(head);
  const body=part('body',[.65,.9,.45],[0,1.25,.2],new THREE.MeshStandardMaterial({color:0x303845,roughness:.75}));
 
  const label=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.name),transparent:true}));
- label.scale.set(2.6,.65,1);label.position.set(0,2.7,-.05);g.add(label);
+ label.scale.set(2.2,.55,1);label.position.set(0,2.55,.15);g.add(label);
 
  const role=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.role.toUpperCase()),transparent:true}));
- role.scale.set(3.5,.42,1);role.position.set(0,2.3,-.05);g.add(role);
+ role.scale.set(2.8,.34,1);role.position.set(0,2.22,.15);g.add(role);
 
  scene.add(g);clickable.push(g);
 }
@@ -146,11 +185,9 @@ function makeText(text){const c=document.createElement('canvas');c.width=512;c.h
 
 agents.forEach(makeAgent);
 
-// central JARVIS command console
-const consoleBase=box('jarvis-console',[4,.55,2.2],[0,.3,0],0x202832,{metalness:.25});
-const orb=new THREE.Mesh(new THREE.SphereGeometry(.7,24,16),new THREE.MeshStandardMaterial({color:0x9bb7ff,emissive:0x496cff,emissiveIntensity:1.5,metalness:.25,roughness:.2}));
-orb.position.set(0,1.25,0);orb.castShadow=true;scene.add(orb);
-const ring=new THREE.Mesh(new THREE.TorusGeometry(1,.045,10,64),new THREE.MeshBasicMaterial({color:0x7d9bff}));ring.rotation.x=Math.PI/2;ring.position.y=1.25;scene.add(ring);
+// Hallway navigation marker: JARVIS is the orchestration layer, Max is the boss agent.
+const jarvisBeacon=new THREE.Mesh(new THREE.TorusGeometry(.65,.035,10,48),new THREE.MeshBasicMaterial({color:0x7d9bff}));
+jarvisBeacon.rotation.x=Math.PI/2;jarvisBeacon.position.set(0,.08,17);scene.add(jarvisBeacon);
 
 const keys={};let moveX=0,moveZ=0,joyX=0,joyZ=0;
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
@@ -208,7 +245,7 @@ const clock=new THREE.Clock();
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updateKeys();
  const speed=5*dt;const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
  camera.position.addScaledVector(right,moveX*speed);camera.position.addScaledVector(forward,moveZ*speed);
- camera.position.x=THREE.MathUtils.clamp(camera.position.x,-12,12);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-10,10);
+ camera.position.x=THREE.MathUtils.clamp(camera.position.x,-4.7,4.7);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-17.8,19.5);
  camera.position.y=4.2;const look=new THREE.Vector3(camera.position.x+forward.x*10,1.6+pitch*3,camera.position.z+forward.z*10);camera.lookAt(look);
  orb.rotation.y+=dt;ring.rotation.z+=dt*.4;renderer.render(scene,camera)}
 animate();

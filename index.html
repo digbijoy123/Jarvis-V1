@@ -347,13 +347,13 @@ function createLowPolyAgentModel(color,isMax=false){
 
  // Arms rest toward the desk.
  const armGeo=new THREE.CapsuleGeometry(.09,.42,4,6);
- for(const x of [-.4,.4]){const arm=new THREE.Mesh(armGeo,suit);arm.position.set(x,.91,-.18);arm.rotation.x=-.72;arm.rotation.z=x<0?.12:-.12;arm.castShadow=true;g.add(arm)}
+ for(const x of [-.4,.4]){const arm=new THREE.Mesh(armGeo,suit);arm.position.set(x,.91,-.18);arm.rotation.x=-.72;arm.rotation.z=x<0?.12:-.12;arm.castShadow=true;arm.name=x<0?'leftArm':'rightArm';g.add(arm)}
 
  // Seated thighs point toward the desk, shins drop near the floor.
  for(const x of [-.17,.17]){
-   const thigh=new THREE.Mesh(new THREE.BoxGeometry(.18,.18,.52),dark);thigh.position.set(x,.72,-.03);thigh.castShadow=true;g.add(thigh);
-   const shin=new THREE.Mesh(new THREE.BoxGeometry(.18,.45,.18),dark);shin.position.set(x,.45,-.28);shin.castShadow=true;g.add(shin);
-   const shoe=new THREE.Mesh(new THREE.BoxGeometry(.23,.11,.34),dark);shoe.position.set(x,.18,-.42);shoe.castShadow=true;g.add(shoe);
+   const thigh=new THREE.Mesh(new THREE.BoxGeometry(.18,.18,.52),dark);thigh.position.set(x,.72,-.03);thigh.castShadow=true;thigh.name=x<0?'leftThigh':'rightThigh';g.add(thigh);
+   const shin=new THREE.Mesh(new THREE.BoxGeometry(.18,.45,.18),dark);shin.position.set(x,.45,-.28);shin.castShadow=true;shin.name=x<0?'leftShin':'rightShin';g.add(shin);
+   const shoe=new THREE.Mesh(new THREE.BoxGeometry(.23,.11,.34),dark);shoe.position.set(x,.18,-.42);shoe.castShadow=true;shoe.name=x<0?'leftFoot':'rightFoot';g.add(shoe);
  }
  const antenna=new THREE.Mesh(new THREE.CylinderGeometry(.028,.028,.16,6),accent);antenna.position.y=1.99;g.add(antenna);
  const tip=new THREE.Mesh(new THREE.SphereGeometry(.055,6,4),accent);tip.position.y=2.09;g.add(tip);
@@ -513,6 +513,10 @@ function makeAgent(a){
  const label=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.name),transparent:true}));
  label.scale.set(a.open?2.0:2.1,.48,1);label.position.set(0,2.7,.1);g.add(label);
  if(!a.open){const role=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.role.toUpperCase()),transparent:true}));role.scale.set(2.25,.28,1);role.position.set(0,2.35,.1);g.add(role)}
+ g.userData.homePosition=g.position.clone();
+ g.userData.homeRotation=g.rotation.y;
+ g.userData.walking=false;
+ g.userData.walkTime=0;
  scene.add(g);if(!a.open)clickable.push(g);
 }
 function makeText(text){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.clearRect(0,0,512,128);x.font='700 34px Arial';x.textAlign='center';x.fillStyle='#ffffff';x.fillText(text,256,72);return new THREE.CanvasTexture(c)}
@@ -752,10 +756,60 @@ function selectAgent(a){
  addLog(a.name,'Cubicle selected. AI slot ready for delegation.');
 }
 function addLog(who,msg){const d=document.createElement('div');d.className='msg';d.innerHTML='<b>'+who+':</b> '+msg;const l=document.getElementById('log');l.prepend(d);while(l.children.length>5)l.lastChild.remove()}
+function findAgentGroup(name){
+ let found=null;
+ scene.traverse(o=>{if(!found && o.userData?.name===name && o.userData?.homePosition)found=o});
+ return found;
+}
+function chooseAgentForTask(task){
+ const t=task.toLowerCase();
+ const rules=[
+  [/website|web|code|app|software|program|javascript|react|frontend|backend/,'CODER'],
+  [/research|search|investigate|find information|source/,'RESEARCHER'],
+  [/design|ui|ux|logo|interface/,'DESIGNER'],
+  [/game|3d|simulation/,'GAME ENGINEER'],
+  [/teach|learn|study|explain|lesson/,'TEACHER'],
+  [/engineer|hardware|electronics|system/,'ENGINEER'],
+  [/business|sales|client|marketing/,'BUSINESS'],
+  [/write|document|email|article|content/,'WRITER'],
+  [/data|spreadsheet|analysis|analytics/,'DATA ANALYST'],
+  [/test|debug|bug|qa/,'QA'],
+  [/deploy|github|vercel|hosting|infrastructure/,'DEVOPS']
+ ];
+ for(const [rx,name] of rules)if(rx.test(t))return findAgentGroup(name);
+ return findAgentGroup('CODER');
+}
+function walkAgentToMax(agentGroup,task){
+ if(!agentGroup || agentGroup.userData.walking)return;
+ const start=agentGroup.position.clone();
+ const sideX=start.x<0?-1.7:1.7;
+ agentGroup.userData.walking=true;
+ agentGroup.userData.walkTime=0;
+ agentGroup.userData.walkWaypoints=[
+   new THREE.Vector3(sideX,0,start.z),
+   new THREE.Vector3(0,0,start.z),
+   new THREE.Vector3(0,0,-14.0),
+   new THREE.Vector3(2.2,0,-14.7),
+   new THREE.Vector3(5.2,0,-15.65)
+ ];
+ agentGroup.userData.walkIndex=0;
+ agentGroup.userData.walkTask=task;
+ agentGroup.userData.walkPhase='TO_MAX';
+ workforceStatus[agentGroup.userData.name].status='WORKING';
+ workforceStatus[agentGroup.userData.name].task=task;
+ workforceStatus[agentGroup.userData.name].progress=0;
+ drawWorkforceDisplay();
+}
 document.getElementById('send').onclick=()=>{
  const input=document.getElementById('task'),t=input.value.trim();if(!t)return;
  if(!selectedAgent){selectedAgent=maxGroup.userData}
- addLog('YOU',t);addLog(selectedAgent.name,'Task queued in AI slot. Backend orchestration will execute it in the next build.');input.value=''
+ addLog('YOU',t);
+ const target=selectedAgent.name==='MAX'?chooseAgentForTask(t):findAgentGroup(selectedAgent.name);
+ if(target){
+   addLog('MAX',target.userData.name+' — come to my office. I am assigning you this task.');
+   walkAgentToMax(target,t);
+ }else addLog(selectedAgent.name,'Task queued in AI slot.');
+ input.value=''
 };
 document.getElementById('task').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('send').click()});
 

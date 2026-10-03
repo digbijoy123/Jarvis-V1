@@ -155,10 +155,20 @@ for(const x of [-8.75,8.75]) for(let z=18;z>=-17;z-=4){
  const panel=box('wall-panel',[.08,2.7,2.5],[x,3,z],0x18212d,{metalness:.2});
  panel.material=trimMat;
 }
-for(let z=19;z>=-17;z-=4){
- const strip=box('floor-light',[.08,.035,2.8],[-8.45,.035,z],0x496cff,{metalness:.3});
- strip.material.emissive=new THREE.Color(0x304cff);strip.material.emissiveIntensity=.55;
- const strip2=strip.clone();strip2.position.x=4.95;scene.add(strip2);
+// Rectangular hallway windows replace the distracting blue floor-line strips.
+const hallWindowMat=new THREE.MeshStandardMaterial({
+ color:0x30486a,emissive:0x162b4b,emissiveIntensity:.35,
+ roughness:.3,metalness:.08,transparent:true,opacity:.82
+});
+for(let z=15;z>=-13;z-=7){
+ for(const x of [-8.82,8.82]){
+  const w=new THREE.Mesh(new THREE.BoxGeometry(.06,2.35,4.6),hallWindowMat);
+  w.position.set(x,3.45,z);w.castShadow=false;scene.add(w);
+  box('hall-window-top',[.11,.08,4.72],[x,4.65,z],0x65758e,{metalness:.35});
+  box('hall-window-bottom',[.11,.08,4.72],[x,2.25,z],0x65758e,{metalness:.35});
+  box('hall-window-left',[.11,2.42,.08],[x,3.45,z-2.3],0x65758e,{metalness:.35});
+  box('hall-window-right',[.11,2.42,.08],[x,3.45,z+2.3],0x65758e,{metalness:.35});
+ }
 }
 for(let z=18;z>=-16;z-=4){
  const light=box('ceiling-light',[3.0,.08,.5],[0,6.12,z],0xcddcff,{metalness:.1});
@@ -193,9 +203,9 @@ box('conference-front-left',[2.0,3,.16],[-6.0,1.5,-12.3],0x1a2535);
 box('conference-front-right',[2.25,3,.16],[-1.625,1.5,-12.3],0x1a2535);
 box('max-office-front-left',[2.25,3,.16],[2.375,1.5,-12.3],0x101925);
 box('max-office-front-right',[2.0,3,.16],[6.0,1.5,-12.3],0x101925);
-const conferenceDoorFrameL=box('conference-door-frame-left',[.08,3,.12],[-4.0,1.5,-12.3],0x5d7cff);
+const conferenceDoorFrameL=box('conference-door-frame-left',[.08,3,.12],[-4.0,1.5,-12.3],0x69778c,{metalness:.35});
 const conferenceDoorFrameR=box('conference-door-frame-right',[.08,3,.12],[-3.0,1.5,-12.3],0x5d7cff);
-const maxDoorFrameL=box('max-door-frame-left',[.08,3,.12],[4.0,1.5,-12.3],0x7d9bff);
+const maxDoorFrameL=box('max-door-frame-left',[.08,3,.12],[4.0,1.5,-12.3],0x69778c,{metalness:.35});
 const maxDoorFrameR=box('max-door-frame-right',[.08,3,.12],[5.0,1.5,-12.3],0x7d9bff);
 const conferenceFloor=new THREE.Mesh(new THREE.BoxGeometry(7.0,.035,4.4),new THREE.MeshStandardMaterial({color:0x202d40,roughness:.92,flatShading:true}));
 conferenceFloor.position.set(-4.5,.03,-14.7);scene.add(conferenceFloor);

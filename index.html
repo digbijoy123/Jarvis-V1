@@ -49,7 +49,7 @@
 .touch-device .brand b{font-size:10px}
 .touch-device .brand small{display:none}
 .touch-device .status{opacity:.48;padding:6px 9px;font-size:9px}
-.touch-device .panel{right:10px;bottom:10px;width:min(320px,34vw);padding:10px;opacity:.72;pointer-events:auto}
+.touch-device .panel{right:10px;bottom:10px;width:min(320px,34vw);padding:10px;opacity:.72;pointer-events:auto;z-index:40}
 .touch-device .panel p,.touch-device .panel .log{display:none}
 .touch-device .panel h3{font-size:12px;margin-bottom:6px}
 .touch-device .chat input{font-size:11px;padding:8px}.touch-device .chat button{font-size:11px;padding:0 11px}
@@ -58,7 +58,7 @@
 .touch-device #lookZone{display:block;right:0;top:0;width:58%;height:100%;z-index:10;pointer-events:auto}
 .touch-device #lookHint{display:none}
 @media (orientation:landscape){
- .touch-device .panel{width:min(320px,30vw);max-height:34vh}
+ .touch-device .panel{width:min(320px,30vw);max-height:34vh;z-index:40}
  .touch-device #moveStick{left:18px;bottom:18px;width:145px;height:145px}
  .touch-device #stickKnob{left:43px;top:43px}
  .touch-device #mobileActions{display:flex !important;right:20px;bottom:calc(34vh + 14px);z-index:50;gap:7px}

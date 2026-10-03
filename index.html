@@ -206,7 +206,7 @@ box('conference-corridor-wall-front',[.16,3,2.1],[-CORRIDOR_HALF,1.5,-13.35],0x1
 box('conference-corridor-wall-back',[.16,3,1.4],[-CORRIDOR_HALF,1.5,-16.3],0x182536);
 
 // Conference rear window.
-box('conference-back-window-sill',[3.7,.22,.18],[-4.125,1.02,ROOM_BACK],0x2b394d,{metalness:.2});
+box('conference-back-window-sill',[3.7,.22,.18],[-4.725,1.02,ROOM_BACK],0x2b394d,{metalness:.2});
 const conferenceWindow=new THREE.Mesh(new THREE.BoxGeometry(3.7,1.65,.045),glassMat);
 conferenceWindow.position.set(-4.725,2.0,ROOM_BACK+.09);conferenceWindow.castShadow=false;scene.add(conferenceWindow);
 for(const x of [-6.575,-2.875]) box('conference-window-frame',[.09,1.8,.12],[x,2.0,ROOM_BACK+.12],0x6d83a8,{metalness:.45});
@@ -244,18 +244,13 @@ box('front-wall-left',[7.05,3,.16],[-4.725,1.5,ROOM_FRONT],0x162230);
 box('front-wall-right',[7.05,3,.16],[4.725,1.5,ROOM_FRONT],0x162230);
 
 // Conference floor + furniture.
-const conferenceFloor=new THREE.Mesh(new THREE.BoxGeometry(7.8,.035,4.4),new THREE.MeshStandardMaterial({color:0x202d40,roughness:.92,flatShading:true}));
-conferenceFloor.position.set(ROOM_LEFT,.03,-14.7);scene.add(conferenceFloor);
+const conferenceFloor=new THREE.Mesh(new THREE.BoxGeometry(7.0,.035,4.4),new THREE.MeshStandardMaterial({color:0x202d40,roughness:.92,flatShading:true}));
+conferenceFloor.position.set(-4.725,.03,-14.7);scene.add(conferenceFloor);
 const conferenceTable=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.12,12),new THREE.MeshStandardMaterial({color:0x303d51,roughness:.6,metalness:.2,flatShading:true}));
-conferenceTable.position.set(ROOM_LEFT,.75,-14.7);conferenceTable.castShadow=true;scene.add(conferenceTable);
+conferenceTable.position.set(-4.725,.75,-14.7);conferenceTable.castShadow=true;scene.add(conferenceTable);
 const conferenceBase=new THREE.Mesh(new THREE.CylinderGeometry(.28,.38,.68,8),new THREE.MeshStandardMaterial({color:0x202a39,roughness:.55,metalness:.3,flatShading:true}));
-conferenceBase.position.set(ROOM_LEFT,.39,-14.7);conferenceBase.castShadow=true;scene.add(conferenceBase);
-for(let i=0;i<8;i++){const a=i*Math.PI/4;const chair=new THREE.Mesh(new THREE.CylinderGeometry(.25,.3,.16,8),new THREE.MeshStandardMaterial({color:0x465876,roughness:.7,flatShading:true}));chair.position.set(ROOM_LEFT+Math.cos(a)*1.65,.35,-14.7+Math.sin(a)*1.65);chair.castShadow=true;scene.add(chair)}
-
-// Max private office: right half, sharing the same outer rectangle.
-box('max-office-back-left',[1.35,3,.16],[1.65,1.5,ROOM_BACK],0x101925);
-box('max-office-back-right',[3.35,3,.16],[5.8,1.5,ROOM_BACK],0x101925);
-box('max-office-right',[.16,3,4.8],[8.25,1.5,-14.7],0x101925);
+conferenceBase.position.set(-4.725,.39,-14.7);conferenceBase.castShadow=true;scene.add(conferenceBase);
+for(let i=0;i<8;i++){const a=i*Math.PI/4;const chair=new THREE.Mesh(new THREE.CylinderGeometry(.25,.3,.16,8),new THREE.MeshStandardMaterial({color:0x465876,roughness:.7,flatShading:true}));chair.position.set(-4.725+Math.cos(a)*1.65,.35,-14.7+Math.sin(a)*1.65);chair.castShadow=true;scene.add(chair)}
 
 // Max rear window.
 box('max-office-window-sill',[3.7,.22,.18],[ROOM_RIGHT,1.02,ROOM_BACK],0x2b3445,{metalness:.2});

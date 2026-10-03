@@ -18,10 +18,16 @@
 .chat{display:flex;gap:7px}.chat input{min-width:0;flex:1;border:1px solid rgba(255,255,255,.1);background:#111722;color:#fff;border-radius:10px;padding:10px;font-size:12px;outline:none}.chat button{border:0;border-radius:10px;padding:0 13px;background:#e9eef7;color:#111722;font-weight:700}
 .log{max-height:120px;overflow:auto;margin-bottom:10px}.msg{font-size:11px;padding:7px 8px;border-radius:9px;background:#111722;margin-bottom:6px;color:#cbd3de}.msg b{color:#fff}
 .help{position:absolute;left:14px;bottom:14px;background:rgba(9,13,20,.78);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:9px 11px;color:#8f9aaa;font-size:10px}
-#touch{display:none;position:absolute;left:14px;bottom:14px;width:170px;height:170px;pointer-events:auto}
-.pad{position:absolute;width:54px;height:54px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(12,17,25,.78);color:#fff;font-size:22px;touch-action:none;user-select:none}
-#up{left:58px;top:0}#left{left:0;top:58px}#down{left:58px;top:58px}#right{left:116px;top:58px}
-@media(max-width:700px){.help{display:none}.panel{left:14px;right:14px;width:auto;bottom:14px}.panel .log{display:none}.topbar{top:10px}.brand{padding:8px 11px}#touch{display:block;bottom:205px}.panel{bottom:12px}.panel p{margin-bottom:8px}}
+#touch,#desktopControls{position:absolute;pointer-events:auto}
+#touch{display:none;left:14px;bottom:205px;width:178px;height:178px}
+#desktopControls{left:14px;bottom:14px;width:154px;height:116px;padding:10px;background:rgba(9,13,20,.78);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:14px}
+.controlTitle{font-size:9px;color:#8f9aaa;margin:0 0 7px 2px;letter-spacing:.08em}
+.controlGrid{position:relative;width:132px;height:78px}
+.pad{position:absolute;width:40px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(12,17,25,.9);color:#fff;font-size:15px;font-weight:700;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;transition:transform .08s,background .08s}
+.pad:active,.pad.active{transform:scale(.94);background:rgba(70,100,160,.75)}
+#up{left:46px;top:0}#left{left:0;top:40px}#down{left:46px;top:40px}#right{left:92px;top:40px}
+@media(max-width:700px){.help{display:none}.panel{left:14px;right:14px;width:auto;bottom:14px}.panel .log{display:none}.topbar{top:10px}.brand{padding:8px 11px}#touch{display:block}.panel{bottom:12px}.panel p{margin-bottom:8px}#desktopControls{display:none}}
+@media(min-width:701px){#touch{display:none}}
 </style>
 </head>
 <body>
@@ -32,10 +38,12 @@
     <div class="status"><span class="dot"></span> SYSTEM ONLINE</div>
   </div>
   <div class="help">DESKTOP: WASD / ARROWS · Mouse: look · Click a workstation</div>
-  <div id="touch">
-    <button class="pad" id="up">▲</button><button class="pad" id="left">◀</button>
-    <button class="pad" id="down">▼</button><button class="pad" id="right">▶</button>
-  </div>
+  <div id="desktopControls"><div class="controlTitle">MOVE · WASD / ARROWS</div><div class="controlGrid">
+    <button class="pad" id="d-up">W</button><button class="pad" id="d-left">A</button><button class="pad" id="d-down">S</button><button class="pad" id="d-right">D</button>
+  </div></div>
+  <div id="touch"><div class="controlTitle">TOUCH MOVEMENT</div><div class="controlGrid">
+    <button class="pad" id="up">▲</button><button class="pad" id="left">◀</button><button class="pad" id="down">▼</button><button class="pad" id="right">▶</button>
+  </div></div>
   <section class="panel">
     <h3 id="agentTitle">JARVIS</h3>
     <p id="agentDesc">Walk to a workstation and click it. This first build is intentionally local-only; the AI backend comes next.</p>
@@ -98,10 +106,12 @@ const ring=new THREE.Mesh(new THREE.TorusGeometry(1,.045,10,64),new THREE.MeshBa
 const keys={};let moveX=0,moveZ=0;
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 function updateKeys(){moveX=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);moveZ=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)}
-document.querySelectorAll('.pad').forEach(b=>{
- const k={up:'w',down:'s',left:'a',right:'d'}[b.id];
- const on=e=>{e.preventDefault();keys[k]=true};const off=e=>{e.preventDefault();keys[k]=false};
- b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off);
+const controlKeys={up:'w',down:'s',left:'a',right:'d','d-up':'w','d-down':'s','d-left':'a','d-right':'d'};
+Object.entries(controlKeys).forEach(([id,k])=>{
+ const b=document.getElementById(id); if(!b)return;
+ const on=e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);keys[k]=true;b.classList.add('active')};
+ const off=e=>{e.preventDefault();keys[k]=false;b.classList.remove('active')};
+ b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);
 });
 
 // Mouse look while pointer is locked; on mobile, camera stays fixed for now.

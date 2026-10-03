@@ -420,6 +420,26 @@ function makeAgent(a){
   addPartition('cubicle-left',[.09,panelHeight,1.88],[-1.34,panelY,.12]);
   addPartition('cubicle-right',[.09,panelHeight,1.88],[1.34,panelY,.12]);
 
+  // Small rectangular opening cut from the TOP of the front cubicle wall.
+  // The lower panel remains solid; the upper section is split around the opening.
+  const frontWindowMat=lowPolyMat(0x38516d,{roughness:.32,metalness:.08});
+  const windowY=1.62, windowW=1.05, windowH=.34;
+  const windowBottom=windowY-windowH/2, windowTop=windowY+windowH/2;
+  const frontFrame=lowPolyMat(0x8795a8,{roughness:.58,metalness:.24});
+
+  // Replace the visual top portion of the front wall with two side posts,
+  // a top header and a bottom sill, leaving the center as an open window.
+  for(const x of [-1.34,1.34]){
+    const post=new THREE.Mesh(new THREE.BoxGeometry(.09,panelHeight, .09),frontFrame);
+    post.position.set(x,panelY,1.07);post.castShadow=true;g.add(post);
+  }
+  const frontHeader=new THREE.Mesh(new THREE.BoxGeometry(2.72,panelY+panelHeight/2-windowTop,.09),frontFrame);
+  frontHeader.position.set(0,(windowTop+panelY+panelHeight/2)/2,1.07);
+  frontHeader.castShadow=true;g.add(frontHeader);
+  const frontSill=new THREE.Mesh(new THREE.BoxGeometry(windowW,.07,.10),frontFrame);
+  frontSill.position.set(0,windowBottom,1.07);frontSill.castShadow=true;g.add(frontSill);
+
+
   // Clean work surface spanning between the privacy panels.
   const desk=new THREE.Mesh(new THREE.BoxGeometry(2.42,.12,1.04),lowPolyMat(0xe5e9ee,{roughness:.55,metalness:.12}));
   desk.position.set(0,.72,.18);desk.castShadow=true;desk.receiveShadow=true;g.add(desk);

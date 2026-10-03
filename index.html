@@ -533,10 +533,9 @@ const workforceDisplayGroup=new THREE.Group();
 workforceDisplayGroup.name='AI Workforce Status Display';
 // Mount the status display low on the OPPOSITE wall, across from the far wall.
  // Keep it near eye level so it reads as a physical wall-mounted command board.
-workforceDisplayGroup.position.set(0,1.15,-12.16);
-// Mount the dashboard on the wall directly opposite the currently visible
-// corridor-end placement. Keep its bottom just above the floor and face it
-// into the corridor so the player can read it head-on.
+workforceDisplayGroup.position.set(0,2.85,-12.16);
+// Mount the dashboard above normal head level. Use two screen faces so the
+// same live status board is readable from either side of the display.
 workforceDisplayGroup.rotation.y=Math.PI;
 
 const workforceFrame=new THREE.Mesh(
@@ -547,12 +546,20 @@ workforceFrame.castShadow=true;
 workforceFrame.receiveShadow=true;
 workforceDisplayGroup.add(workforceFrame);
 
-const workforceScreen=new THREE.Mesh(
+const workforceScreenFront=new THREE.Mesh(
   new THREE.PlaneGeometry(4.05,1.95),
-  new THREE.MeshBasicMaterial({map:workforceDisplayTexture})
+  new THREE.MeshBasicMaterial({map:workforceDisplayTexture,side:THREE.DoubleSide})
 );
-workforceScreen.position.z=.09;
-workforceDisplayGroup.add(workforceScreen);
+workforceScreenFront.position.z=.09;
+workforceDisplayGroup.add(workforceScreenFront);
+
+const workforceScreenBack=new THREE.Mesh(
+  new THREE.PlaneGeometry(4.05,1.95),
+  new THREE.MeshBasicMaterial({map:workforceDisplayTexture,side:THREE.DoubleSide})
+);
+workforceScreenBack.position.z=-.09;
+workforceScreenBack.rotation.y=Math.PI;
+workforceDisplayGroup.add(workforceScreenBack);
 
 const workforceStatus={
   // Future runtime fields:

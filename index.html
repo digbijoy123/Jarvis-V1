@@ -512,6 +512,36 @@ function makeAgent(a){
   const chairSeat=new THREE.Mesh(new THREE.CylinderGeometry(.38,.44,.14,8),lowPolyMat(0x3b2a22,{roughness:.8}));chairSeat.position.set(0,.48,1.02);chairSeat.castShadow=true;g.add(chairSeat);
   const chairBack=new THREE.Mesh(new THREE.BoxGeometry(.64,.78,.13),lowPolyMat(0x2b201b,{roughness:.75}));chairBack.position.set(0,.88,1.2);chairBack.castShadow=true;g.add(chairBack);
   const model=createLowPolyAgentModel(a.color,false);model.position.set(0,0,.72);model.rotation.y=0;g.add(model);g.userData.agentModel=model;
+
+// Visible live-work indicator that travels with the agent when it is working.
+// The bar is intentionally above the robot's head so it remains readable in the office.
+const workIndicator=new THREE.Group();
+workIndicator.name='work-indicator';
+workIndicator.position.set(0,2.25,0);
+const workBarBack=new THREE.Mesh(
+ new THREE.BoxGeometry(1.35,.12,.035),
+ new THREE.MeshBasicMaterial({color:0x111722,transparent:true,opacity:.92})
+);
+workBarBack.name='work-bar-background';
+workIndicator.add(workBarBack);
+const workBarFill=new THREE.Mesh(
+ new THREE.BoxGeometry(1.25,.075,.045),
+ new THREE.MeshBasicMaterial({color:a.color})
+);
+workBarFill.name='work-bar-fill';
+workBarFill.position.z=.025;
+workBarFill.position.x=-.625;
+workBarFill.scale.x=.02;
+workIndicator.add(workBarFill);
+const workLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText('WORKING'),transparent:true}));
+workLabel.name='work-label';
+workLabel.scale.set(1.35,.30,1);
+workLabel.position.set(0,.25,0);
+workIndicator.add(workLabel);
+workIndicator.visible=false;
+model.add(workIndicator);
+g.userData.workIndicator=workIndicator;
+g.userData.agentModel=model;
  }
  const label=new THREE.Sprite(new THREE.SpriteMaterial({map:makeText(a.name),transparent:true}));
  label.scale.set(a.open?2.0:2.1,.48,1);label.position.set(0,2.7,.1);g.add(label);
@@ -891,6 +921,12 @@ function walkAgentToMax(agentGroup,task){
   new THREE.Vector3(0,1.0,-14.0),new THREE.Vector3(2.2,1.0,-14.7),new THREE.Vector3(5.2,1.0,-15.65)
  ];
  walker.userData.walkIndex=0;walker.userData.walkTask=task;walker.userData.walkPhase='TO_MAX';
+ const indicator=agentGroup.userData.workIndicator;
+ if(indicator){
+  indicator.visible=true;
+  const fill=indicator.getObjectByName('work-bar-fill');
+  if(fill){fill.scale.x=.02;fill.position.x=-.625}
+ }
  agentGroup.remove(walker);scene.add(walker);walker.position.copy(start);walker.rotation.copy(worldRotation);
  workforceStatus[agentGroup.userData.name].status='WORKING';
  workforceStatus[agentGroup.userData.name].task=task;workforceStatus[agentGroup.userData.name].progress=0;drawWorkforceDisplay();
@@ -999,6 +1035,8 @@ function updateWalkingAgents(dt){
           if(orchestrationState.active){orchestrationState.currentStep=1;updateOrchestrationDisplay();addLog('MAX',u.agentName+' received the assignment and is now working.');}
         }else{
           u.walking=false;
+          const indicator=o.userData.workIndicator;
+          if(indicator)indicator.visible=false;
           const parent=u.originalParent;
           if(parent){parent.add(o);o.position.copy(u.homeLocalPosition);o.rotation.copy(u.homeLocalRotation);}
           if(orchestrationState.active){
@@ -1022,7 +1060,18 @@ function updateWalkingAgents(dt){
       if(leftArm)leftArm.rotation.x=-.15+swing*.35;if(rightArm)rightArm.rotation.x=-.15-swing*.35;
       if(leftThigh)leftThigh.rotation.x=swing;if(rightThigh)rightThigh.rotation.x=-swing;
       if(leftShin)leftShin.rotation.x=-swing*.65;if(rightShin)rightShin.rotation.x=swing*.65;
-      const state=workforceStatus[u.agentName];if(state)state.progress=Math.min(.99,(u.walkIndex+1)/u.walkWaypoints.length);
+      const state=workforceStatus[u.agentName];
+      if(state)state.progress=Math.min(.99,(u.walkIndex+1)/u.walkWaypoints.length);
+      const indicator=o.userData.workIndicator;
+      if(indicator){
+        const fill=indicator.getObjectByName('work-bar-fill');
+        if(fill){
+          const progress=state?Math.max(.02,state.progress):.02;
+          fill.scale.x=progress;
+          fill.position.x=-.625+(1.25*progress/2);
+        }
+        indicator.position.y=2.25+Math.sin(performance.now()*.006)*.035;
+      }
     }
   }
  });

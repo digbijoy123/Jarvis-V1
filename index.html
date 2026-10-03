@@ -842,7 +842,17 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  if(playerY<PLAYER_EYE_HEIGHT){playerY=PLAYER_EYE_HEIGHT;verticalVelocity=0}
 
  camera.position.y=playerY;camera.fov=gameSettings.fov;camera.updateProjectionMatrix();
- const look=new THREE.Vector3(camera.position.x+forward.x*10,playerY+pitch*3,camera.position.z+forward.z*10);camera.lookAt(look);
+ // Apply pitch as a true camera angle instead of scaling target Y.
+// This preserves the full ±90° vertical look range.
+const lookDistance=10;
+const cosPitch=Math.cos(pitch);
+const lookDirection=new THREE.Vector3(
+  forward.x*cosPitch,
+  Math.sin(pitch),
+  forward.z*cosPitch
+);
+const look=camera.position.clone().addScaledVector(lookDirection,lookDistance);
+camera.lookAt(look);
  scene.traverse(o=>{if(o.userData?.mixer)o.userData.mixer.update(dt);if(o.userData?.agentModel && o.userData.name==='MAX'){const m=o.userData.agentModel;m.position.y=Math.sin(performance.now()*.002)*.018}});
  renderer.render(scene,camera)}
 animate();

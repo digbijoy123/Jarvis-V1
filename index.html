@@ -599,7 +599,11 @@ renderer.domElement.addEventListener('pointerdown',e=>{
  if(a)selectAgent(a)
 }
 });
-let selectedAgent=null;
+let selectedAgent=maxGroup.userData;
+document.getElementById('agentTitle').textContent=selectedAgent.name;
+document.getElementById('agentDesc').textContent=selectedAgent.role+' · AI slot ready';
+document.getElementById('task').placeholder='Give Max a command…';
+
 function selectAgent(a){
  selectedAgent=a;
  document.getElementById('agentTitle').textContent=a.name;
@@ -610,7 +614,7 @@ function selectAgent(a){
 function addLog(who,msg){const d=document.createElement('div');d.className='msg';d.innerHTML='<b>'+who+':</b> '+msg;const l=document.getElementById('log');l.prepend(d);while(l.children.length>5)l.lastChild.remove()}
 document.getElementById('send').onclick=()=>{
  const input=document.getElementById('task'),t=input.value.trim();if(!t)return;
- if(!selectedAgent){addLog('JARVIS','Select an AI cubicle before assigning a task.');return}
+ if(!selectedAgent){selectedAgent=maxGroup.userData}
  addLog('YOU',t);addLog(selectedAgent.name,'Task queued in AI slot. Backend orchestration will execute it in the next build.');input.value=''
 };
 document.getElementById('task').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('send').click()});

@@ -779,6 +779,66 @@ function chooseAgentForTask(task){
  for(const [rx,name] of rules)if(rx.test(t))return findAgentGroup(name);
  return findAgentGroup('CODER');
 }
+const orchestrationState={
+ active:false,
+ task:'',
+ plan:[],
+ currentStep:0,
+ assignedAgent:null,
+ result:null
+};
+function buildTaskPlan(task,agentName){
+ const t=task.toLowerCase();
+ const plan=[
+  {agent:'MAX',label:'Interpret request'},
+  {agent:agentName,label:'Execute specialist work'}
+ ];
+ if(/website|web|app|software|code|game|deploy|github|vercel/.test(t) && agentName!=='QA')
+   plan.push({agent:'QA',label:'Verify result'});
+ if(/deploy|github|vercel|hosting/.test(t) && agentName!=='DEVOPS')
+   plan.push({agent:'DEVOPS',label:'Deployment check'});
+ plan.push({agent:'MAX',label:'Return final result'});
+ return plan;
+}
+function updateOrchestrationDisplay(){
+ const current=orchestrationState.plan[orchestrationState.currentStep];
+ if(current){
+   addLog('MAX','WORKFLOW '+(orchestrationState.currentStep+1)+'/'+orchestrationState.plan.length+': '+current.label+' · '+current.agent);
+ }
+}
+function finishOrchestration(agentGroup){
+ const name=agentGroup?.userData?.name;
+ orchestrationState.active=false;
+ orchestrationState.result='Completed frontend workflow simulation';
+ if(name && workforceStatus[name]){
+   workforceStatus[name].status='IDLE';
+   workforceStatus[name].task='No active task';
+   workforceStatus[name].progress=1;
+ }
+ drawWorkforceDisplay();
+ addLog('MAX','Workflow completed. No external tool action was executed in this frontend build.');
+}
+function startOrchestration(task){
+ if(orchestrationState.active){
+   addLog('MAX','Another workflow is already running. Wait for it to finish.');
+   return;
+ }
+ const target=selectedAgent.name==='MAX'?chooseAgentForTask(task):findAgentGroup(selectedAgent.name);
+ if(!target){
+   addLog('MAX','I could not map this request to an available specialist.');
+   return;
+ }
+ orchestrationState.active=true;
+ orchestrationState.task=task;
+ orchestrationState.assignedAgent=target.userData.name;
+ orchestrationState.currentStep=0;
+ orchestrationState.plan=buildTaskPlan(task,target.userData.name);
+ orchestrationState.result=null;
+ addLog('MAX','Workflow created: '+orchestrationState.plan.map(s=>s.agent).join(' → '));
+ updateOrchestrationDisplay();
+ addLog('MAX',target.userData.name+' — come to my office. I am assigning you this task.');
+ walkAgentToMax(target,task);
+}
 function walkAgentToMax(agentGroup,task){
  if(!agentGroup || agentGroup.userData.walking)return;
  const start=agentGroup.position.clone();
@@ -804,11 +864,7 @@ document.getElementById('send').onclick=()=>{
  const input=document.getElementById('task'),t=input.value.trim();if(!t)return;
  if(!selectedAgent){selectedAgent=maxGroup.userData}
  addLog('YOU',t);
- const target=selectedAgent.name==='MAX'?chooseAgentForTask(t):findAgentGroup(selectedAgent.name);
- if(target){
-   addLog('MAX',target.userData.name+' — come to my office. I am assigning you this task.');
-   walkAgentToMax(target,t);
- }else addLog(selectedAgent.name,'Task queued in AI slot.');
+ startOrchestration(t);
  input.value=''
 };
 document.getElementById('task').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('send').click()});
@@ -903,14 +959,28 @@ function updateWalkingAgents(dt){
     if(dist<.08){
       o.position.x=target.x;o.position.z=target.z;u.walkIndex++;
       if(u.walkIndex>=u.walkWaypoints.length){
-        if(u.walkPhase==='TO_MAX'){u.walkPhase='AT_MAX';u.walkTime=0;}
-        else{
+        if(u.walkPhase==='TO_MAX'){
+          u.walkPhase='AT_MAX';u.walkTime=0;
+          if(orchestrationState.active){
+            orchestrationState.currentStep=1;
+            updateOrchestrationDisplay();
+            addLog('MAX',u.name+' received the assignment and is now working.');
+          }
+        }else{
           u.walking=false;
           o.position.copy(u.homePosition);
           o.rotation.y=u.homeRotation;
-          const state=workforceStatus[u.name];
-          if(state){state.status='IDLE';state.task='No active task';state.progress=1;}
-          drawWorkforceDisplay();
+          if(orchestrationState.active){
+            if(orchestrationState.currentStep<orchestrationState.plan.length-1){
+              orchestrationState.currentStep++;
+              updateOrchestrationDisplay();
+            }
+            finishOrchestration(o);
+          }else{
+            const state=workforceStatus[u.name];
+            if(state){state.status='IDLE';state.task='No active task';state.progress=1;}
+            drawWorkforceDisplay();
+          }
         }
       }
     }else{
